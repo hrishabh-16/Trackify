@@ -1,5 +1,5 @@
 package com.trackify.enums;
 
-public class ExpenseStatus {
+public enum ExpenseStatus {
 
 }
