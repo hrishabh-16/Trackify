@@ -1,10 +1,257 @@
 <!DOCTYPE html>
-<html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
-<meta charset="UTF-8">
-<title>Insert title here</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to Trackify</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f4;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            padding: 0;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        .header p {
+            margin: 10px 0 0 0;
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        .content {
+            padding: 40px 30px;
+        }
+        .welcome-message {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .verification-box {
+            background-color: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 25px;
+            text-align: center;
+            margin: 30px 0;
+        }
+        .verification-text {
+            font-size: 16px;
+            color: #6c757d;
+            margin-bottom: 20px;
+        }
+        .verify-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 16px;
+            transition: transform 0.2s ease;
+        }
+        .verify-button:hover {
+            transform: translateY(-2px);
+            text-decoration: none;
+            color: white;
+        }
+        .features {
+            margin: 30px 0;
+        }
+        .feature {
+            display: flex;
+            align-items: center;
+            margin: 15px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        .feature-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            color: white;
+            font-weight: bold;
+        }
+        .feature-text {
+            flex: 1;
+        }
+        .feature-title {
+            font-weight: 600;
+            color: #333;
+            margin: 0 0 5px 0;
+        }
+        .feature-description {
+            color: #6c757d;
+            margin: 0;
+            font-size: 14px;
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 30px;
+            text-align: center;
+            border-top: 1px solid #e9ecef;
+        }
+        .footer p {
+            margin: 0;
+            color: #6c757d;
+            font-size: 14px;
+        }
+        .social-links {
+            margin: 20px 0;
+        }
+        .social-link {
+            display: inline-block;
+            margin: 0 10px;
+            color: #667eea;
+            text-decoration: none;
+        }
+        .link-text {
+            color: #667eea;
+            text-decoration: none;
+        }
+        .link-text:hover {
+            text-decoration: underline;
+        }
+        @media (max-width: 600px) {
+            .container {
+                margin: 0;
+                border-radius: 0;
+            }
+            .header, .content, .footer {
+                padding: 20px;
+            }
+            .feature {
+                flex-direction: column;
+                text-align: center;
+            }
+            .feature-icon {
+                margin: 0 0 10px 0;
+            }
+        }
+    </style>
 </head>
 <body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>Welcome to Trackify!</h1>
+            <p>Your journey to better expense management starts here</p>
+        </div>
 
+        <!-- Content -->
+        <div class="content">
+            <div class="welcome-message">
+                <p>Hello <strong th:text="${userName ?: 'there'}">User</strong>,</p>
+                <p>Welcome to Trackify! We're excited to have you on board. You're now part of a community that's taking control of their finances with smart expense tracking.</p>
+            </div>
+
+            <!-- Email Verification -->
+            <div class="verification-box" th:if="${verificationUrl}">
+                <div class="verification-text">
+                    <p><strong>Please verify your email address</strong></p>
+                    <p>To get started with Trackify, please verify your email address by clicking the button below:</p>
+                </div>
+                <a th:href="${verificationUrl}" class="verify-button">Verify Email Address</a>
+                <p style="margin-top: 15px; font-size: 12px; color: #6c757d;">
+                    If the button doesn't work, copy and paste this link: <br>
+                    <span th:text="${verificationUrl}">verification-link</span>
+                </p>
+            </div>
+
+            <!-- Features Section -->
+            <div class="features">
+                <h3 style="color: #333; margin-bottom: 20px;">What you can do with Trackify:</h3>
+                
+                <div class="feature">
+                    <div class="feature-icon">💰</div>
+                    <div class="feature-text">
+                        <div class="feature-title">Track Expenses in Real-time</div>
+                        <div class="feature-description">Add and manage your expenses instantly with live updates across all devices</div>
+                    </div>
+                </div>
+
+                <div class="feature">
+                    <div class="feature-icon">📊</div>
+                    <div class="feature-text">
+                        <div class="feature-title">Smart Analytics</div>
+                        <div class="feature-description">Get insights into your spending patterns with detailed reports and charts</div>
+                    </div>
+                </div>
+
+                <div class="feature">
+                    <div class="feature-icon">👥</div>
+                    <div class="feature-text">
+                        <div class="feature-title">Team Collaboration</div>
+                        <div class="feature-description">Share expenses with family or team members and manage budgets together</div>
+                    </div>
+                </div>
+
+                <div class="feature">
+                    <div class="feature-icon">🤖</div>
+                    <div class="feature-text">
+                        <div class="feature-title">AI-Powered Categorization</div>
+                        <div class="feature-description">Let AI automatically categorize your expenses and detect spending patterns</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Getting Started -->
+            <div style="background-color: #e3f2fd; border-radius: 8px; padding: 20px; margin: 30px 0;">
+                <h4 style="color: #1976d2; margin: 0 0 15px 0;">🚀 Ready to get started?</h4>
+                <p style="margin: 0; color: #333;">
+                    Once you've verified your email, you can:
+                </p>
+                <ul style="color: #333; margin: 10px 0;">
+                    <li>Set up your first budget</li>
+                    <li>Add your initial expenses</li>
+                    <li>Invite team members or family</li>
+                    <li>Explore our analytics dashboard</li>
+                </ul>
+                <a th:href="${baseUrl}" class="link-text">Visit Dashboard</a>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <div class="social-links">
+                <a href="#" class="social-link">Help Center</a>
+                <a href="#" class="social-link">Privacy Policy</a>
+                <a href="#" class="social-link">Terms of Service</a>
+            </div>
+            <p>
+                This email was sent to <span th:text="${email ?: 'your email'}">user@example.com</span><br>
+                If you didn't sign up for Trackify, you can safely ignore this email.
+            </p>
+            <p style="margin-top: 20px;">
+                <strong>Trackify Team</strong><br>
+                Making expense tracking simple and smart
+            </p>
+        </div>
+    </div>
 </body>
 </html>
