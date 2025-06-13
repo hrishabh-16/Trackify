@@ -1,5 +1,5 @@
 package com.trackify.service.impl;
-import com.trackify.app.TrackifyBackendApplication;
+
 import com.trackify.dto.request.RegisterRequest;
 import com.trackify.dto.response.UserResponse;
 import com.trackify.entity.User;
@@ -10,6 +10,7 @@ import com.trackify.repository.UserRepository;
 import com.trackify.service.EmailService;
 import com.trackify.service.UserService;
 import com.trackify.validator.UserValidator;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
@@ -39,19 +40,19 @@ public class UserServiceImpl implements UserService {
 
 	
     @Autowired
-    private  UserRepository userRepository;
+    private UserRepository userRepository;
     
     @Autowired
-    private  PasswordEncoder passwordEncoder;
+    private PasswordEncoder passwordEncoder;
     
     @Autowired
-    private  ModelMapper modelMapper;
+    private ModelMapper modelMapper;
     
     @Autowired
-    private  UserValidator userValidator;
+    private UserValidator userValidator;
     
     @Autowired
-    private  EmailService emailService;
+    private EmailService emailService;
     
     @Override
     public UserResponse createUser(RegisterRequest registerRequest) {
@@ -104,7 +105,7 @@ public class UserServiceImpl implements UserService {
         User existingUser = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
         
-        // Validate email availability if changed
+     // Validate email availability if changed
         if (!existingUser.getEmail().equals(updateRequest.getEmail())) {
             validateEmailAvailable(updateRequest.getEmail(), id);
         }
@@ -392,20 +393,23 @@ public class UserServiceImpl implements UserService {
     
     @Override
     public User convertToEntity(RegisterRequest registerRequest) {
-        return User.builder()
-                .email(registerRequest.getEmail().toLowerCase().trim())
-                .password(passwordEncoder.encode(registerRequest.getPassword()))
-                .firstName(registerRequest.getFirstName().trim())
-                .lastName(registerRequest.getLastName().trim())
-                .phoneNumber(StringUtils.hasText(registerRequest.getPhoneNumber()) ? 
-                           registerRequest.getPhoneNumber().trim() : null)
-                .role(registerRequest.getRole() != null ? registerRequest.getRole() : UserRole.USER)
-                .isEnabled(true)
-                .isAccountNonExpired(true)
-                .isAccountNonLocked(true)
-                .isCredentialsNonExpired(true)
-                .emailVerified(false)
-                .build();
+        // Create user with regular constructor instead of builder
+        User user = new User();
+        user.setUsername(registerRequest.getEmail().split("@")[0]); // Generate username from email
+        user.setEmail(registerRequest.getEmail().toLowerCase().trim());
+        user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
+        user.setFirstName(registerRequest.getFirstName().trim());
+        user.setLastName(registerRequest.getLastName().trim());
+        user.setPhoneNumber(StringUtils.hasText(registerRequest.getPhoneNumber()) ? 
+                           registerRequest.getPhoneNumber().trim() : null);
+        user.setRole(registerRequest.getRole() != null ? registerRequest.getRole() : UserRole.USER);
+        user.setIsEnabled(true);
+        user.setIsAccountNonExpired(true);
+        user.setIsAccountNonLocked(true);
+        user.setIsCredentialsNonExpired(true);
+        user.setEmailVerified(false);
+        
+        return user;
     }
     
     @Override
