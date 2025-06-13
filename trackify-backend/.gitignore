@@ -31,3 +31,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# Hide the application.properties file (do not commit sensitive config)
+trackify-backend\src\main\resources\application.properties
