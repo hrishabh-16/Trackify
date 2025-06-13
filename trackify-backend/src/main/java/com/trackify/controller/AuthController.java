@@ -191,5 +191,5 @@ public class AuthController {
             return bearerToken.substring(7);
         }
         return null;
-    }
+    } 
 }
