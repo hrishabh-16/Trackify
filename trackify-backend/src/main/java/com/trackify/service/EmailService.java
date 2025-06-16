@@ -1,6 +1,8 @@
 package com.trackify.service;
 
+import com.trackify.dto.response.ReportResponse;
 import com.trackify.entity.User;
+import com.trackify.entity.Notification;
 
 public interface EmailService {
     
@@ -32,10 +34,14 @@ public interface EmailService {
     // Reports
     void sendWeeklyReportEmail(String email, String reportContent);
     void sendMonthlyReportEmail(String email, String reportContent);
+    void sendReportEmail(String email, ReportResponse report, byte[] reportFile);
     
     // Account notifications
     void sendAccountStatusChangeEmail(String email, boolean isEnabled);
     void sendRoleChangeNotification(String email, String oldRole, String newRole);
+    
+    // Notification email - ADDED METHOD TO FIX ERROR
+    void sendNotificationEmail(Notification notification);
     
     // Generic email method
     void sendEmail(String to, String subject, String content);
