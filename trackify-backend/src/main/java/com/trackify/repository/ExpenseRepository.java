@@ -23,6 +23,8 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
     List<Expense> findByUserIdOrderByExpenseDateDesc(Long userId);
     Page<Expense> findByUserId(Long userId, Pageable pageable);
     
+    
+    
     // Find by category
     List<Expense> findByCategoryId(Long categoryId);
     Page<Expense> findByCategoryId(Long categoryId, Pageable pageable);
@@ -37,15 +39,56 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
     List<Expense> findByUserIdAndStatus(Long userId, ExpenseStatus status);
     Page<Expense> findByUserIdAndStatus(Long userId, ExpenseStatus status, Pageable pageable);
     
-    // Find by date range with DateTime
-    List<Expense> findByUserIdAndExpenseDateBetween(Long userId, LocalDateTime startDate, LocalDateTime endDate);
-    Page<Expense> findByUserIdAndExpenseDateBetween(Long userId, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
+    //  Find by date range with LocalDate 
+    @Query("SELECT e FROM Expense e WHERE e.userId = :userId AND e.expenseDate BETWEEN :startDate AND :endDate ORDER BY e.expenseDate DESC")
+    List<Expense> findByUserIdAndExpenseDateBetween(@Param("userId") Long userId, 
+                                                   @Param("startDate") LocalDate startDate, 
+                                                   @Param("endDate") LocalDate endDate);
+
+    @Query("SELECT e FROM Expense e WHERE e.userId = :userId AND e.expenseDate BETWEEN :startDate AND :endDate ORDER BY e.expenseDate DESC")
+    Page<Expense> findByUserIdAndExpenseDateBetween(@Param("userId") Long userId, 
+                                                   @Param("startDate") LocalDate startDate, 
+                                                   @Param("endDate") LocalDate endDate, 
+                                                   Pageable pageable);
+
+    // Find by date range with LocalDateTime
+    @Query("SELECT e FROM Expense e WHERE e.userId = :userId AND e.expenseDate BETWEEN DATE(:startDate) AND DATE(:endDate) ORDER BY e.expenseDate DESC")
+    List<Expense> findByUserIdAndExpenseDateBetween(@Param("userId") Long userId, 
+                                                  @Param("startDate") LocalDateTime startDate, 
+                                                  @Param("endDate") LocalDateTime endDate);
+
+    @Query("SELECT e FROM Expense e WHERE e.userId = :userId AND e.expenseDate BETWEEN DATE(:startDate) AND DATE(:endDate) ORDER BY e.expenseDate DESC")
+    Page<Expense> findByUserIdAndExpenseDateBetween(@Param("userId") Long userId, 
+                                                  @Param("startDate") LocalDateTime startDate, 
+                                                  @Param("endDate") LocalDateTime endDate, 
+                                                  Pageable pageable);
+
+    // Find by user IDs (for team queries) with LocalDate
+    @Query("SELECT e FROM Expense e WHERE e.userId IN :userIds AND e.expenseDate BETWEEN :startDate AND :endDate ORDER BY e.expenseDate DESC")
+    List<Expense> findByUserIdInAndExpenseDateBetween(@Param("userIds") List<Long> userIds, 
+                                                     @Param("startDate") LocalDate startDate, 
+                                                     @Param("endDate") LocalDate endDate);
+
+    // Find by user IDs (for team queries) with LocalDateTime
+    @Query("SELECT e FROM Expense e WHERE e.userId IN :userIds AND e.expenseDate BETWEEN DATE(:startDate) AND DATE(:endDate) ORDER BY e.expenseDate DESC")
+    List<Expense> findByUserIdInAndExpenseDateBetween(@Param("userIds") List<Long> userIds, 
+                                                     @Param("startDate") LocalDateTime startDate, 
+                                                     @Param("endDate") LocalDateTime endDate);
+   
     
-    // Find by user IDs (for team queries)
-    List<Expense> findByUserIdInAndExpenseDateBetween(List<Long> userIds, LocalDateTime startDate, LocalDateTime endDate);
-    
-    // Find by user and category and date range
-    List<Expense> findByUserIdAndCategoryIdAndExpenseDateBetween(Long userId, Long categoryId, LocalDateTime startDate, LocalDateTime endDate);
+ // Find by user and category and date range with LocalDate
+    @Query("SELECT e FROM Expense e WHERE e.userId = :userId AND e.categoryId = :categoryId AND e.expenseDate BETWEEN :startDate AND :endDate ORDER BY e.expenseDate DESC")
+    List<Expense> findByUserIdAndCategoryIdAndExpenseDateBetween(@Param("userId") Long userId, 
+                                                                @Param("categoryId") Long categoryId, 
+                                                                @Param("startDate") LocalDate startDate, 
+                                                                @Param("endDate") LocalDate endDate);
+
+    // Find by user and category and date range with LocalDateTime
+    @Query("SELECT e FROM Expense e WHERE e.userId = :userId AND e.categoryId = :categoryId AND e.expenseDate BETWEEN DATE(:startDate) AND DATE(:endDate) ORDER BY e.expenseDate DESC")
+    List<Expense> findByUserIdAndCategoryIdAndExpenseDateBetween(@Param("userId") Long userId, 
+                                                                @Param("categoryId") Long categoryId, 
+                                                                @Param("startDate") LocalDateTime startDate, 
+                                                                @Param("endDate") LocalDateTime endDate);
     
     // Find by date range (original with LocalDate)
     @Query("SELECT e FROM Expense e WHERE e.userId = :userId AND e.expenseDate BETWEEN :startDate AND :endDate ORDER BY e.expenseDate DESC")
