@@ -108,6 +108,112 @@ public class BudgetRequest {
         private Long teamId;
 
         private String notes;
+
+		public String getName() {
+			return name;
+		}
+
+		public void setName(String name) {
+			this.name = name;
+		}
+
+		public String getDescription() {
+			return description;
+		}
+
+		public void setDescription(String description) {
+			this.description = description;
+		}
+
+		public BigDecimal getTotalAmount() {
+			return totalAmount;
+		}
+
+		public void setTotalAmount(BigDecimal totalAmount) {
+			this.totalAmount = totalAmount;
+		}
+
+		public LocalDate getStartDate() {
+			return startDate;
+		}
+
+		public void setStartDate(LocalDate startDate) {
+			this.startDate = startDate;
+		}
+
+		public LocalDate getEndDate() {
+			return endDate;
+		}
+
+		public void setEndDate(LocalDate endDate) {
+			this.endDate = endDate;
+		}
+
+		public String getCurrency() {
+			return currency;
+		}
+
+		public void setCurrency(String currency) {
+			this.currency = currency;
+		}
+
+		public BigDecimal getAlertThreshold() {
+			return alertThreshold;
+		}
+
+		public void setAlertThreshold(BigDecimal alertThreshold) {
+			this.alertThreshold = alertThreshold;
+		}
+
+		public Boolean getIsActive() {
+			return isActive;
+		}
+
+		public void setIsActive(Boolean isActive) {
+			this.isActive = isActive;
+		}
+
+		public Boolean getIsRecurring() {
+			return isRecurring;
+		}
+
+		public void setIsRecurring(Boolean isRecurring) {
+			this.isRecurring = isRecurring;
+		}
+
+		public String getRecurrencePeriod() {
+			return recurrencePeriod;
+		}
+
+		public void setRecurrencePeriod(String recurrencePeriod) {
+			this.recurrencePeriod = recurrencePeriod;
+		}
+
+		public Long getCategoryId() {
+			return categoryId;
+		}
+
+		public void setCategoryId(Long categoryId) {
+			this.categoryId = categoryId;
+		}
+
+		public Long getTeamId() {
+			return teamId;
+		}
+
+		public void setTeamId(Long teamId) {
+			this.teamId = teamId;
+		}
+
+		public String getNotes() {
+			return notes;
+		}
+
+		public void setNotes(String notes) {
+			this.notes = notes;
+		}
+        
+        
     }
 
     @Data
@@ -148,6 +254,56 @@ public class BudgetRequest {
         private LocalDate nextStartDate;
 
         private String notes;
+
+		public Long getBudgetId() {
+			return budgetId;
+		}
+
+		public void setBudgetId(Long budgetId) {
+			this.budgetId = budgetId;
+		}
+
+		public String getRecurrencePeriod() {
+			return recurrencePeriod;
+		}
+
+		public void setRecurrencePeriod(String recurrencePeriod) {
+			this.recurrencePeriod = recurrencePeriod;
+		}
+
+		public Boolean getAutoCreate() {
+			return autoCreate;
+		}
+
+		public void setAutoCreate(Boolean autoCreate) {
+			this.autoCreate = autoCreate;
+		}
+
+		public Integer getOccurrences() {
+			return occurrences;
+		}
+
+		public void setOccurrences(Integer occurrences) {
+			this.occurrences = occurrences;
+		}
+
+		public LocalDate getNextStartDate() {
+			return nextStartDate;
+		}
+
+		public void setNextStartDate(LocalDate nextStartDate) {
+			this.nextStartDate = nextStartDate;
+		}
+
+		public String getNotes() {
+			return notes;
+		}
+
+		public void setNotes(String notes) {
+			this.notes = notes;
+		}
+        
+        
     }
 
     @Data
@@ -167,6 +323,40 @@ public class BudgetRequest {
 
         @Size(max = 500, message = "Reason cannot exceed 500 characters")
         private String reason;
+
+		public Long getSourceBudgetId() {
+			return sourceBudgetId;
+		}
+
+		public void setSourceBudgetId(Long sourceBudgetId) {
+			this.sourceBudgetId = sourceBudgetId;
+		}
+
+		public Long getTargetBudgetId() {
+			return targetBudgetId;
+		}
+
+		public void setTargetBudgetId(Long targetBudgetId) {
+			this.targetBudgetId = targetBudgetId;
+		}
+
+		public BigDecimal getAmount() {
+			return amount;
+		}
+
+		public void setAmount(BigDecimal amount) {
+			this.amount = amount;
+		}
+
+		public String getReason() {
+			return reason;
+		}
+
+		public void setReason(String reason) {
+			this.reason = reason;
+		}
+        
+        
     }
 
 	public String getName() {
