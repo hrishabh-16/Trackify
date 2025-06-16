@@ -88,7 +88,7 @@ public class AuthResponse {
     }
     
     public AuthResponse() {
-		// TODO Auto-generated constructor stub
+		
 	}
 
 	// Static builder method for better compatibility

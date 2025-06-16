@@ -35,15 +35,14 @@ public class AuthServiceImpl implements AuthService {
 
 	private static final Logger logger = LoggerFactory.getLogger(AuthServiceImpl.class);
 
+	@Autowired
+	private AuthenticationManager authenticationManager;
 
 	@Autowired
-	private  AuthenticationManager authenticationManager;
+	private JwtTokenProvider jwtTokenProvider;
 
 	@Autowired
-	private  JwtTokenProvider jwtTokenProvider;
-
-	@Autowired
-	private  UserService userService;
+	private UserService userService;
 
 	@Override
 	public AuthResponse register(RegisterRequest registerRequest) {
@@ -129,6 +128,7 @@ public class AuthServiceImpl implements AuthService {
 
 		logger.info("Token refreshed successfully for user: {}", userId);
 
+		// FIXED: Using static builder method instead of Lombok's builder
 		return AuthResponse.builder()
 				.accessToken(newAccessToken)
 				.refreshToken(refreshToken) // Keep the same refresh token
