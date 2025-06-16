@@ -52,7 +52,38 @@ public class CategorySuggestionEngine {
             return "General";
         }
     }
-
+    
+    /**
+     * Suggest category with Long userId parameter - ADDED MISSING METHOD
+     */
+    public Long suggestCategory(String context, Long userId) {
+        try {
+            // Extract meaningful parts from context
+            String description = context;
+            String merchantName = null;
+            BigDecimal amount = null;
+            
+            // Try to extract merchant name from context
+            if (context.contains("to:") || context.contains("from:")) {
+                String[] parts = context.split("(?:to:|from:)");
+                if (parts.length > 1) {
+                    merchantName = parts[1].trim();
+                }
+            }
+            
+            // Use the existing method to get category name
+            String categoryName = suggestCategory(description, merchantName, amount);
+            
+            // Convert category name to ID (you'll need to implement this based on your Category entity)
+            // For now, return null to indicate no specific category ID suggestion
+            return null;
+            
+        } catch (Exception e) {
+            logger.error("Error suggesting category for user {}", userId, e);
+            return null;
+        }
+    }
+    
     /**
      * Suggest multiple categories with confidence scores
      */
