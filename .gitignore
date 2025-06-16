@@ -10,3 +10,5 @@
 # .vscode\launch.json
 
 trackify-backend/src/main/resources/application.properties
+
+trackify-backend/logs/trackify.log
