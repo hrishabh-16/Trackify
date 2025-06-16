@@ -112,8 +112,8 @@ public class Budget {
     }
 
     public Budget() {
-		// TODO Auto-generated constructor stub
-	}
+    	
+    }
 
 	// Utility methods
     public BigDecimal getUsedPercentage() {
@@ -122,6 +122,11 @@ public class Budget {
         }
         return spentAmount.divide(totalAmount, 4, java.math.RoundingMode.HALF_UP)
                 .multiply(BigDecimal.valueOf(100));
+    }
+
+    // ADDED METHOD TO FIX ERROR - This was missing
+    public BigDecimal getUtilizationPercentage() {
+        return getUsedPercentage();
     }
 
     public boolean isOverBudget() {
@@ -326,5 +331,4 @@ public class Budget {
 	public void setUpdatedAt(LocalDateTime updatedAt) {
 		this.updatedAt = updatedAt;
 	}
-    
 }
