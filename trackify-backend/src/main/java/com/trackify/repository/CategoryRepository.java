@@ -18,12 +18,21 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     // Find by name
     Optional<Category> findByNameIgnoreCase(String name);
     
+    // FIXED: Changed from userId to createdBy (matches Category entity field)
+    Optional<Category> findByNameAndCreatedBy(String name, Long createdBy);
+    
+    // FIXED: Changed from UserIdIsNull to CreatedByIsNull (matches Category entity field)
+    Optional<Category> findByNameAndCreatedByIsNull(String name);
+    
+    // FIXED: Changed from UserId to CreatedBy (matches Category entity field)
+    List<Category> findByCreatedByOrCreatedByIsNull(Long createdBy);
+    
     // Find by active status
     List<Category> findByIsActiveTrue();
     List<Category> findByIsActiveFalse();
     Page<Category> findByIsActive(Boolean isActive, Pageable pageable);
     
-    // Find by user (personal categories)
+    // Find by user (personal categories) - already correct
     List<Category> findByCreatedByAndTeamIdIsNullOrderBySortOrderAsc(Long userId);
     Page<Category> findByCreatedByAndTeamIdIsNull(Long userId, Pageable pageable);
     
@@ -76,4 +85,20 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     
     @Query("SELECT COALESCE(MAX(c.sortOrder), 0) FROM Category c WHERE c.teamId = :teamId")
     Integer getMaxSortOrderForTeam(@Param("teamId") Long teamId);
+    
+    // ADDED: Additional helper methods that might be useful
+    
+    // Find all categories for a user (personal + system categories)
+    @Query("SELECT c FROM Category c WHERE c.createdBy = :userId OR c.createdBy IS NULL ORDER BY c.sortOrder ASC")
+    List<Category> findUserAccessibleCategories(@Param("userId") Long userId);
+    
+    // Find system categories only
+    List<Category> findByCreatedByIsNullAndIsSystemTrue();
+    
+    // Find personal categories for user
+    List<Category> findByCreatedByAndTeamIdIsNull(Long createdBy);
+    
+    // Find categories by name (for any user or system)
+    @Query("SELECT c FROM Category c WHERE LOWER(c.name) = LOWER(:name)")
+    List<Category> findByNameIgnoreCaseAll(@Param("name") String name);
 }
