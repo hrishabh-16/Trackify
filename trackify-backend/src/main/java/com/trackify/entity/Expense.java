@@ -187,6 +187,26 @@ public class Expense {
         return status == ExpenseStatus.PENDING || status == ExpenseStatus.DRAFT;
     }
 
+    // ADDED METHOD TO FIX ERROR - This was missing
+    public String getReceiptUrl() {
+        if (receipts != null && !receipts.isEmpty()) {
+            // Return the first receipt URL or a combined URL
+            return receipts.get(0).getFileUrl();
+        }
+        return null;
+    }
+
+    // ADDED METHOD TO GET ALL RECEIPT URLS
+    public List<String> getReceiptUrls() {
+        if (receipts != null) {
+            return receipts.stream()
+                    .map(Receipt::getFileUrl)
+                    .filter(url -> url != null && !url.isEmpty())
+                    .toList();
+        }
+        return List.of();
+    }
+
 	public Long getId() {
 		return id;
 	}
@@ -474,6 +494,4 @@ public class Expense {
 	public void setUpdatedAt(LocalDateTime updatedAt) {
 		this.updatedAt = updatedAt;
 	}
-
-  
 }
