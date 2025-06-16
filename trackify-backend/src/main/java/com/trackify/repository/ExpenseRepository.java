@@ -51,11 +51,19 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
                                                    @Param("endDate") LocalDate endDate, 
                                                    Pageable pageable);
 
+ // Find by user ID and created at between - ADDED MISSING METHOD
+    @Query("SELECT e FROM Expense e WHERE e.userId = :userId AND e.createdAt BETWEEN :startTime AND :endTime ORDER BY e.createdAt DESC")
+    List<Expense> findByUserIdAndCreatedAtBetween(@Param("userId") Long userId, 
+                                                 @Param("startTime") LocalDateTime startTime, 
+                                                 @Param("endTime") LocalDateTime endTime);
+    
     // Find by date range with LocalDateTime
     @Query("SELECT e FROM Expense e WHERE e.userId = :userId AND e.expenseDate BETWEEN DATE(:startDate) AND DATE(:endDate) ORDER BY e.expenseDate DESC")
     List<Expense> findByUserIdAndExpenseDateBetween(@Param("userId") Long userId, 
                                                   @Param("startDate") LocalDateTime startDate, 
                                                   @Param("endDate") LocalDateTime endDate);
+    
+    
 
     @Query("SELECT e FROM Expense e WHERE e.userId = :userId AND e.expenseDate BETWEEN DATE(:startDate) AND DATE(:endDate) ORDER BY e.expenseDate DESC")
     Page<Expense> findByUserIdAndExpenseDateBetween(@Param("userId") Long userId, 
