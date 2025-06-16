@@ -69,6 +69,15 @@ public class Receipt {
     @Column(name = "uploaded_by", nullable = false)
     private Long uploadedBy;
     
+    // Relationships
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "expense_id", insertable = false, updatable = false)
+    private Expense expense;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "uploaded_by", insertable = false, updatable = false)
+    private User uploadedByUser;
+    
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -234,6 +243,22 @@ public class Receipt {
 
     public void setUploadedBy(Long uploadedBy) {
         this.uploadedBy = uploadedBy;
+    }
+
+    public Expense getExpense() {
+        return expense;
+    }
+
+    public void setExpense(Expense expense) {
+        this.expense = expense;
+    }
+
+    public User getUploadedByUser() {
+        return uploadedByUser;
+    }
+
+    public void setUploadedByUser(User uploadedByUser) {
+        this.uploadedByUser = uploadedByUser;
     }
 
     public LocalDateTime getCreatedAt() {
