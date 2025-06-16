@@ -1,6 +1,8 @@
 package com.trackify.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.trackify.enums.ExpenseStatus;
+
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -401,6 +403,61 @@ public class DashboardResponse {
         private BigDecimal remainingAmount;
         private BigDecimal usedPercentage;
         private String status; // ON_TRACK, WARNING, EXCEEDED
+		public BudgetStatus(Long budgetId, String categoryName, BigDecimal budgetAmount, BigDecimal spentAmount,
+				BigDecimal remainingAmount, BigDecimal usedPercentage, String status) {
+			super();
+			this.budgetId = budgetId;
+			this.categoryName = categoryName;
+			this.budgetAmount = budgetAmount;
+			this.spentAmount = spentAmount;
+			this.remainingAmount = remainingAmount;
+			this.usedPercentage = usedPercentage;
+			this.status = status;
+		}
+		public Long getBudgetId() {
+			return budgetId;
+		}
+		public void setBudgetId(Long budgetId) {
+			this.budgetId = budgetId;
+		}
+		public String getCategoryName() {
+			return categoryName;
+		}
+		public void setCategoryName(String categoryName) {
+			this.categoryName = categoryName;
+		}
+		public BigDecimal getBudgetAmount() {
+			return budgetAmount;
+		}
+		public void setBudgetAmount(BigDecimal budgetAmount) {
+			this.budgetAmount = budgetAmount;
+		}
+		public BigDecimal getSpentAmount() {
+			return spentAmount;
+		}
+		public void setSpentAmount(BigDecimal spentAmount) {
+			this.spentAmount = spentAmount;
+		}
+		public BigDecimal getRemainingAmount() {
+			return remainingAmount;
+		}
+		public void setRemainingAmount(BigDecimal remainingAmount) {
+			this.remainingAmount = remainingAmount;
+		}
+		public BigDecimal getUsedPercentage() {
+			return usedPercentage;
+		}
+		public void setUsedPercentage(BigDecimal usedPercentage) {
+			this.usedPercentage = usedPercentage;
+		}
+		public String getStatus() {
+			return status;
+		}
+		public void setStatus(String status) {
+			this.status = status;
+		}
+        
+        
     }
 
     @Data
@@ -460,6 +517,55 @@ public class DashboardResponse {
         private BigDecimal totalAmount;
         private long expenseCount;
         private String role;
+		public TeamMemberExpense(Long userId, String username, String fullName, BigDecimal totalAmount,
+				long expenseCount, String role) {
+			super();
+			this.userId = userId;
+			this.username = username;
+			this.fullName = fullName;
+			this.totalAmount = totalAmount;
+			this.expenseCount = expenseCount;
+			this.role = role;
+		}
+		public Long getUserId() {
+			return userId;
+		}
+		public void setUserId(Long userId) {
+			this.userId = userId;
+		}
+		public String getUsername() {
+			return username;
+		}
+		public void setUsername(String username) {
+			this.username = username;
+		}
+		public String getFullName() {
+			return fullName;
+		}
+		public void setFullName(String fullName) {
+			this.fullName = fullName;
+		}
+		public BigDecimal getTotalAmount() {
+			return totalAmount;
+		}
+		public void setTotalAmount(BigDecimal totalAmount) {
+			this.totalAmount = totalAmount;
+		}
+		public long getExpenseCount() {
+			return expenseCount;
+		}
+		public void setExpenseCount(long expenseCount) {
+			this.expenseCount = expenseCount;
+		}
+		public String getRole() {
+			return role;
+		}
+		public void setRole(String role) {
+			this.role = role;
+		}
+	
+        
+        
     }
 
     @Data
