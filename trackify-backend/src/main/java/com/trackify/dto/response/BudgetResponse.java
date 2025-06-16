@@ -73,7 +73,11 @@ public class BudgetResponse {
         }
     }
 
-    @Data
+    public BudgetResponse() {
+		
+	}
+
+	@Data
     @NoArgsConstructor
     @AllArgsConstructor
     public static class BudgetStatus {
@@ -95,6 +99,72 @@ public class BudgetResponse {
             this.isNearThreshold = isNearThreshold;
             this.isExpired = isExpired;
         }
+
+		public String getStatus() {
+			return status;
+		}
+
+		public void setStatus(String status) {
+			this.status = status;
+		}
+
+		public String getStatusMessage() {
+			return statusMessage;
+		}
+
+		public void setStatusMessage(String statusMessage) {
+			this.statusMessage = statusMessage;
+		}
+
+		public Boolean getIsOverBudget() {
+			return isOverBudget;
+		}
+
+		public void setIsOverBudget(Boolean isOverBudget) {
+			this.isOverBudget = isOverBudget;
+		}
+
+		public Boolean getIsNearThreshold() {
+			return isNearThreshold;
+		}
+
+		public void setIsNearThreshold(Boolean isNearThreshold) {
+			this.isNearThreshold = isNearThreshold;
+		}
+
+		public Boolean getIsExpired() {
+			return isExpired;
+		}
+
+		public void setIsExpired(Boolean isExpired) {
+			this.isExpired = isExpired;
+		}
+
+		public Boolean getIsCurrentlyActive() {
+			return isCurrentlyActive;
+		}
+
+		public void setIsCurrentlyActive(Boolean isCurrentlyActive) {
+			this.isCurrentlyActive = isCurrentlyActive;
+		}
+
+		public Integer getDaysRemaining() {
+			return daysRemaining;
+		}
+
+		public void setDaysRemaining(Integer daysRemaining) {
+			this.daysRemaining = daysRemaining;
+		}
+
+		public BigDecimal getAmountOverBudget() {
+			return amountOverBudget;
+		}
+
+		public void setAmountOverBudget(BigDecimal amountOverBudget) {
+			this.amountOverBudget = amountOverBudget;
+		}
+        
+        
     }
 
     @Data
@@ -263,4 +333,206 @@ public class BudgetResponse {
             }
         }
     }
+
+	public Long getId() {
+		return id;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getDescription() {
+		return description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
+
+	public BigDecimal getTotalAmount() {
+		return totalAmount;
+	}
+
+	public void setTotalAmount(BigDecimal totalAmount) {
+		this.totalAmount = totalAmount;
+	}
+
+	public BigDecimal getSpentAmount() {
+		return spentAmount;
+	}
+
+	public void setSpentAmount(BigDecimal spentAmount) {
+		this.spentAmount = spentAmount;
+	}
+
+	public BigDecimal getRemainingAmount() {
+		return remainingAmount;
+	}
+
+	public void setRemainingAmount(BigDecimal remainingAmount) {
+		this.remainingAmount = remainingAmount;
+	}
+
+	public BigDecimal getUsedPercentage() {
+		return usedPercentage;
+	}
+
+	public void setUsedPercentage(BigDecimal usedPercentage) {
+		this.usedPercentage = usedPercentage;
+	}
+
+	public LocalDate getStartDate() {
+		return startDate;
+	}
+
+	public void setStartDate(LocalDate startDate) {
+		this.startDate = startDate;
+	}
+
+	public LocalDate getEndDate() {
+		return endDate;
+	}
+
+	public void setEndDate(LocalDate endDate) {
+		this.endDate = endDate;
+	}
+
+	public String getCurrency() {
+		return currency;
+	}
+
+	public void setCurrency(String currency) {
+		this.currency = currency;
+	}
+
+	public BigDecimal getAlertThreshold() {
+		return alertThreshold;
+	}
+
+	public void setAlertThreshold(BigDecimal alertThreshold) {
+		this.alertThreshold = alertThreshold;
+	}
+
+	public Boolean getIsActive() {
+		return isActive;
+	}
+
+	public void setIsActive(Boolean isActive) {
+		this.isActive = isActive;
+	}
+
+	public Boolean getIsRecurring() {
+		return isRecurring;
+	}
+
+	public void setIsRecurring(Boolean isRecurring) {
+		this.isRecurring = isRecurring;
+	}
+
+	public String getRecurrencePeriod() {
+		return recurrencePeriod;
+	}
+
+	public void setRecurrencePeriod(String recurrencePeriod) {
+		this.recurrencePeriod = recurrencePeriod;
+	}
+
+	public Long getUserId() {
+		return userId;
+	}
+
+	public void setUserId(Long userId) {
+		this.userId = userId;
+	}
+
+	public String getUsername() {
+		return username;
+	}
+
+	public void setUsername(String username) {
+		this.username = username;
+	}
+
+	public Long getCategoryId() {
+		return categoryId;
+	}
+
+	public void setCategoryId(Long categoryId) {
+		this.categoryId = categoryId;
+	}
+
+	public String getCategoryName() {
+		return categoryName;
+	}
+
+	public void setCategoryName(String categoryName) {
+		this.categoryName = categoryName;
+	}
+
+	public Long getTeamId() {
+		return teamId;
+	}
+
+	public void setTeamId(Long teamId) {
+		this.teamId = teamId;
+	}
+
+	public String getTeamName() {
+		return teamName;
+	}
+
+	public void setTeamName(String teamName) {
+		this.teamName = teamName;
+	}
+
+	public BudgetStatus getStatus() {
+		return status;
+	}
+
+	public void setStatus(BudgetStatus status) {
+		this.status = status;
+	}
+
+	public BudgetAlert getAlert() {
+		return alert;
+	}
+
+	public void setAlert(BudgetAlert alert) {
+		this.alert = alert;
+	}
+
+	public List<ExpenseInfo> getRecentExpenses() {
+		return recentExpenses;
+	}
+
+	public void setRecentExpenses(List<ExpenseInfo> recentExpenses) {
+		this.recentExpenses = recentExpenses;
+	}
+
+	public LocalDateTime getCreatedAt() {
+		return createdAt;
+	}
+
+	public void setCreatedAt(LocalDateTime createdAt) {
+		this.createdAt = createdAt;
+	}
+
+	public LocalDateTime getUpdatedAt() {
+		return updatedAt;
+	}
+
+	public void setUpdatedAt(LocalDateTime updatedAt) {
+		this.updatedAt = updatedAt;
+	}
+    
+    
 }
