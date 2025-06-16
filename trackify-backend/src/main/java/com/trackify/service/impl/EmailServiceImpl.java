@@ -1,6 +1,10 @@
 package com.trackify.service.impl;
+import java.io.ByteArrayInputStream;
 
+import com.trackify.dto.response.ReportResponse;
+import com.trackify.entity.Notification;
 import com.trackify.entity.User;
+import com.trackify.repository.UserRepository;
 import com.trackify.service.EmailService;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -32,6 +36,9 @@ public class EmailServiceImpl implements EmailService {
 
     @Autowired
     private  JavaMailSender mailSender;
+    
+    @Autowired
+    private UserRepository userRepository;
     
     @Autowired
     private  TemplateEngine templateEngine;
@@ -430,5 +437,192 @@ public class EmailServiceImpl implements EmailService {
         	logger.error("Unexpected error sending email with attachment to: {}", to, e);
             throw new RuntimeException("Failed to send email with attachment", e);
         }
+    }
+
+    @Override
+    public void sendReportEmail(String email, ReportResponse report, byte[] reportFile) {
+        logger.info("Sending report email to: {}", email);
+        
+        try {
+            Context context = new Context();
+            context.setVariable("reportName", report.getReportName());
+            context.setVariable("reportType", report.getReportType());
+            context.setVariable("generatedAt", report.getGeneratedAt());
+            context.setVariable("generatedBy", report.getGeneratedBy());
+            context.setVariable("baseUrl", baseUrl);
+            
+            String subject = String.format("%s Report - %s", 
+                report.getReportType(), 
+                report.getReportName());
+            
+            String htmlContent = templateEngine.process("email/report", context);
+            
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            
+            helper.setFrom(fromAddress, fromName);
+            helper.setTo(email);
+            helper.setSubject(subject);
+            helper.setText(htmlContent, true);
+            
+            // Attach the report file
+            String fileName = String.format("%s-%s.%s", 
+                report.getReportName().replaceAll("\\s+", "-").toLowerCase(),
+                LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmm")),
+                report.getFormat().toLowerCase());
+            
+            helper.addAttachment(fileName, () -> new ByteArrayInputStream(reportFile));
+            
+            mailSender.send(message);
+            logger.info("Report email sent successfully to: {}", email);
+        } catch (MessagingException e) {
+            logger.error("Failed to send report email to: {}", email, e);
+            throw new RuntimeException("Failed to send report email", e);
+        } catch (Exception e) {
+            logger.error("Unexpected error sending report email to: {}", email, e);
+            throw new RuntimeException("Failed to send report email", e);
+        }
+    }
+
+    @Override
+    public void sendNotificationEmail(Notification notification) {
+        logger.info("Sending notification email for notification ID: {}", notification.getId());
+        
+        try {
+            // Get user details
+            User user = userRepository.findById(notification.getUserId())
+                    .orElseThrow(() -> new RuntimeException("User not found: " + notification.getUserId()));
+            
+            // Create email content based on notification type
+            String subject = createEmailSubject(notification);
+            String htmlContent = createNotificationEmailContent(notification, user);
+            
+            // Send HTML email
+            sendHtmlEmail(user.getEmail(), subject, htmlContent);
+            
+            logger.info("Notification email sent successfully to: {} for notification: {}", 
+                       user.getEmail(), notification.getId());
+            
+        } catch (Exception e) {
+            logger.error("Failed to send notification email for notification ID: {}", 
+                        notification.getId(), e);
+            throw new RuntimeException("Failed to send notification email", e);
+        }
+    }
+
+    private String createEmailSubject(Notification notification) {
+        String baseSubject = notification.getTitle();
+        
+        // Add prefix based on priority
+        if ("URGENT".equals(notification.getPriority())) {
+            return "[URGENT] " + baseSubject + " - Trackify";
+        } else if ("HIGH".equals(notification.getPriority())) {
+            return "[HIGH] " + baseSubject + " - Trackify";
+        } else {
+            return baseSubject + " - Trackify";
+        }
+    }
+
+    private String createNotificationEmailContent(Notification notification, User user) {
+        try {
+            Context context = new Context();
+            context.setVariable("userName", user.getFirstName());
+            context.setVariable("fullName", user.getFullName());
+            context.setVariable("notificationTitle", notification.getTitle());
+            context.setVariable("notificationMessage", notification.getMessage());
+            context.setVariable("notificationType", notification.getType().name());
+            context.setVariable("priority", notification.getPriority());
+            context.setVariable("category", notification.getCategory());
+            context.setVariable("createdAt", notification.getCreatedAt());
+            context.setVariable("baseUrl", baseUrl);
+            
+            // Add action button if available
+            if (notification.getActionUrl() != null && notification.getActionText() != null) {
+                context.setVariable("hasAction", true);
+                context.setVariable("actionUrl", baseUrl + notification.getActionUrl());
+                context.setVariable("actionText", notification.getActionText());
+            } else {
+                context.setVariable("hasAction", false);
+            }
+            
+            // Add entity-specific information
+            if (notification.getRelatedEntityType() != null && notification.getRelatedEntityId() != null) {
+                context.setVariable("hasEntity", true);
+                context.setVariable("entityType", notification.getRelatedEntityType());
+                context.setVariable("entityId", notification.getRelatedEntityId());
+                context.setVariable("entityUrl", baseUrl + "/" + 
+                    notification.getRelatedEntityType().toLowerCase() + "s/" + 
+                    notification.getRelatedEntityId());
+            } else {
+                context.setVariable("hasEntity", false);
+            }
+            
+            // Use a generic notification template or create content directly
+            return templateEngine.process("email/notification", context);
+            
+        } catch (Exception e) {
+            logger.warn("Failed to process notification email template, using fallback content", e);
+            return createFallbackEmailContent(notification, user);
+        }
+    }
+
+    private String createFallbackEmailContent(Notification notification, User user) {
+        StringBuilder content = new StringBuilder();
+        content.append("<!DOCTYPE html>");
+        content.append("<html><head><title>").append(notification.getTitle()).append("</title></head>");
+        content.append("<body style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;'>");
+        
+        // Header
+        content.append("<div style='background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;'>");
+        content.append("<h1 style='color: #333; margin: 0;'>").append(notification.getTitle()).append("</h1>");
+        content.append("</div>");
+        
+        // Greeting
+        content.append("<p>Hello ").append(user.getFirstName()).append(",</p>");
+        
+        // Message
+        content.append("<div style='background-color: #ffffff; padding: 20px; border-left: 4px solid #007bff; margin: 20px 0;'>");
+        content.append("<p style='margin: 0; font-size: 16px; line-height: 1.5;'>");
+        content.append(notification.getMessage());
+        content.append("</p>");
+        content.append("</div>");
+        
+        // Priority indicator
+        if ("URGENT".equals(notification.getPriority()) || "HIGH".equals(notification.getPriority())) {
+            String priorityColor = "URGENT".equals(notification.getPriority()) ? "#dc3545" : "#fd7e14";
+            content.append("<div style='background-color: ").append(priorityColor);
+            content.append("; color: white; padding: 10px; border-radius: 4px; margin: 15px 0; text-align: center;'>");
+            content.append("<strong>Priority: ").append(notification.getPriority()).append("</strong>");
+            content.append("</div>");
+        }
+        
+        // Action button
+        if (notification.getActionUrl() != null && notification.getActionText() != null) {
+            content.append("<div style='text-align: center; margin: 30px 0;'>");
+            content.append("<a href='").append(baseUrl).append(notification.getActionUrl());
+            content.append("' style='background-color: #007bff; color: white; padding: 12px 24px; ");
+            content.append("text-decoration: none; border-radius: 4px; display: inline-block; font-weight: bold;'>");
+            content.append(notification.getActionText());
+            content.append("</a>");
+            content.append("</div>");
+        }
+        
+        // Footer
+        content.append("<hr style='border: none; border-top: 1px solid #eee; margin: 30px 0;'>");
+        content.append("<p style='color: #666; font-size: 14px;'>");
+        content.append("This notification was sent on ");
+        content.append(notification.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        content.append("<br>");
+        content.append("You can view all notifications in your <a href='").append(baseUrl);
+        content.append("/notifications'>Trackify dashboard</a>.");
+        content.append("</p>");
+        
+        content.append("<p style='color: #666; font-size: 12px;'>");
+        content.append("Best regards,<br>Trackify Team");
+        content.append("</p>");
+        
+        content.append("</body></html>");
+        
+        return content.toString();
     }
  }
