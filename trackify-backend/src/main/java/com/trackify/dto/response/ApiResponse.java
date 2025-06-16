@@ -40,7 +40,7 @@ public class ApiResponse<T> {
         }
 
         public ApiResponseBuilder<T> message(String message) {
-            this.message = message;
+        	this.message = message;
             return this;
         }
 
@@ -65,8 +65,6 @@ public class ApiResponse<T> {
         }
 
         public ApiResponse<T> build() {
-            // Create ApiResponse using the all-args constructor
-            // Constructor order: success, message, data, status, path, timestamp
             ApiResponse<T> response = new ApiResponse<>();
             response.setSuccess(this.success);
             response.setMessage(this.message);
@@ -101,6 +99,7 @@ public class ApiResponse<T> {
         return success("Request processed successfully", null);
     }
 
+    // FIXED: Added overloaded error methods to handle different parameter combinations
     public static <T> ApiResponse<T> error(String message, int status, String path) {
         return ApiResponse.<T>builder()
                 .success(false)
@@ -120,6 +119,17 @@ public class ApiResponse<T> {
         return error(message, 500, null);
     }
 
+    // FIXED: Added this method to handle error(String, T) calls
+    public static <T> ApiResponse<T> error(String message, T data) {
+        return ApiResponse.<T>builder()
+                .success(false)
+                .message(message)
+                .data(data)
+                .status(500)
+                .timestamp(LocalDateTime.now())
+                .build();
+    }
+
     public static <T> ApiResponse<T> validationError(String message, T validationErrors) {
         return ApiResponse.<T>builder()
                 .success(false)
@@ -130,53 +140,51 @@ public class ApiResponse<T> {
                 .build();
     }
 
-	public boolean isSuccess() {
-		return success;
-	}
+    public boolean isSuccess() {
+        return success;
+    }
 
-	public void setSuccess(boolean success) {
-		this.success = success;
-	}
+    public void setSuccess(boolean success) {
+        this.success = success;
+    }
 
-	public String getMessage() {
-		return message;
-	}
+    public String getMessage() {
+        return message;
+    }
 
-	public void setMessage(String message) {
-		this.message = message;
-	}
+    public void setMessage(String message) {
+        this.message = message;
+    }
 
-	public T getData() {
-		return data;
-	}
+    public T getData() {
+        return data;
+    }
 
-	public void setData(T data) {
-		this.data = data;
-	}
+    public void setData(T data) {
+        this.data = data;
+    }
 
-	public int getStatus() {
-		return status;
-	}
+    public int getStatus() {
+        return status;
+    }
 
-	public void setStatus(int status) {
-		this.status = status;
-	}
+    public void setStatus(int status) {
+        this.status = status;
+    }
 
-	public String getPath() {
-		return path;
-	}
+    public String getPath() {
+        return path;
+    }
 
-	public void setPath(String path) {
-		this.path = path;
-	}
+    public void setPath(String path) {
+        this.path = path;
+    }
 
-	public LocalDateTime getTimestamp() {
-		return timestamp;
-	}
+    public LocalDateTime getTimestamp() {
+        return timestamp;
+    }
 
-	public void setTimestamp(LocalDateTime timestamp) {
-		this.timestamp = timestamp;
-	}
-    
-    
+    public void setTimestamp(LocalDateTime timestamp) {
+        this.timestamp = timestamp;
+    }
 }
