@@ -275,6 +275,80 @@ public class BudgetResponse {
             this.activeBudgetsCount = activeBudgetsCount;
             this.overBudgetCount = overBudgetCount;
         }
+
+		public BigDecimal getTotalBudgeted() {
+			return totalBudgeted;
+		}
+
+		public void setTotalBudgeted(BigDecimal totalBudgeted) {
+			this.totalBudgeted = totalBudgeted;
+		}
+
+		public BigDecimal getTotalSpent() {
+			return totalSpent;
+		}
+
+		public void setTotalSpent(BigDecimal totalSpent) {
+			this.totalSpent = totalSpent;
+		}
+
+		public BigDecimal getTotalRemaining() {
+			return totalRemaining;
+		}
+
+		public void setTotalRemaining(BigDecimal totalRemaining) {
+			this.totalRemaining = totalRemaining;
+		}
+
+		public BigDecimal getAverageUsagePercentage() {
+			return averageUsagePercentage;
+		}
+
+		public void setAverageUsagePercentage(BigDecimal averageUsagePercentage) {
+			this.averageUsagePercentage = averageUsagePercentage;
+		}
+
+		public Integer getActiveBudgetsCount() {
+			return activeBudgetsCount;
+		}
+
+		public void setActiveBudgetsCount(Integer activeBudgetsCount) {
+			this.activeBudgetsCount = activeBudgetsCount;
+		}
+
+		public Integer getOverBudgetCount() {
+			return overBudgetCount;
+		}
+
+		public void setOverBudgetCount(Integer overBudgetCount) {
+			this.overBudgetCount = overBudgetCount;
+		}
+
+		public Integer getNearThresholdCount() {
+			return nearThresholdCount;
+		}
+
+		public void setNearThresholdCount(Integer nearThresholdCount) {
+			this.nearThresholdCount = nearThresholdCount;
+		}
+
+		public List<CategoryBudgetSummary> getCategoryBreakdown() {
+			return categoryBreakdown;
+		}
+
+		public void setCategoryBreakdown(List<CategoryBudgetSummary> categoryBreakdown) {
+			this.categoryBreakdown = categoryBreakdown;
+		}
+
+		public List<MonthlyBudgetTrend> getMonthlyTrends() {
+			return monthlyTrends;
+		}
+
+		public void setMonthlyTrends(List<MonthlyBudgetTrend> monthlyTrends) {
+			this.monthlyTrends = monthlyTrends;
+		}
+        
+        
     }
 
     @Data
