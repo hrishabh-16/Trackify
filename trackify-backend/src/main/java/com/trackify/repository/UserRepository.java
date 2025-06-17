@@ -41,6 +41,14 @@ public interface UserRepository extends JpaRepository<User, Long> {
     
     List<User> findByEmailVerified(Boolean emailVerified);
     
+    
+    // Find users by last login before a certain date
+    List<User> findByLastLoginAtBefore(LocalDateTime cutoffTime);
+
+    // Alternative method that handles null lastLoginAt values
+    @Query("SELECT u FROM User u WHERE u.lastLoginAt IS NULL OR u.lastLoginAt < :cutoffTime")
+    List<User> findByLastLoginBeforeOrNull(@Param("cutoffTime") LocalDateTime cutoffTime);
+    
     @Query("SELECT u FROM User u WHERE u.firstName LIKE %:keyword% OR u.lastName LIKE %:keyword% OR u.email LIKE %:keyword%")
     Page<User> findByKeyword(@Param("keyword") String keyword, Pageable pageable);
     
