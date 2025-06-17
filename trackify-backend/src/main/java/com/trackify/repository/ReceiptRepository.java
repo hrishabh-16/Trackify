@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -69,6 +70,10 @@ public interface ReceiptRepository extends JpaRepository<Receipt, Long> {
     // Get total storage used by user
     @Query("SELECT SUM(r.fileSize) FROM Receipt r WHERE r.uploadedBy = :userId")
     Long getTotalStorageUsedByUser(@Param("userId") Long userId);
+    
+ // Find orphaned receipts
+    @Query("SELECT r FROM Receipt r WHERE r.expenseId IS NULL AND r.createdAt < :cutoffTime")
+    List<Receipt> findOrphanedReceipts(@Param("cutoffTime") LocalDateTime cutoffTime);
     
     // Get total storage used
     @Query("SELECT SUM(r.fileSize) FROM Receipt r")
