@@ -39,6 +39,14 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
     List<Expense> findByUserIdAndStatus(Long userId, ExpenseStatus status);
     Page<Expense> findByUserIdAndStatus(Long userId, ExpenseStatus status, Pageable pageable);
     
+    // Find expenses by status and creation date
+    List<Expense> findByStatusAndCreatedAtBefore(ExpenseStatus status, LocalDateTime cutoffTime);
+
+    // Find expenses by creation date and status list
+    @Query("SELECT e FROM Expense e WHERE e.createdAt < :cutoffTime AND e.status IN :statuses")
+    List<Expense> findByCreatedAtBeforeAndStatusIn(@Param("cutoffTime") LocalDateTime cutoffTime, 
+                                                  @Param("statuses") List<ExpenseStatus> statuses);
+    
     //  Find by date range with LocalDate 
     @Query("SELECT e FROM Expense e WHERE e.userId = :userId AND e.expenseDate BETWEEN :startDate AND :endDate ORDER BY e.expenseDate DESC")
     List<Expense> findByUserIdAndExpenseDateBetween(@Param("userId") Long userId, 
@@ -182,6 +190,10 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
     // Recent expenses
     @Query("SELECT e FROM Expense e WHERE e.userId = :userId ORDER BY e.createdAt DESC")
     List<Expense> findRecentExpenses(@Param("userId") Long userId, Pageable pageable);
+    
+    // Expense Validation
+    @Query("SELECT COUNT(e) FROM Expense e WHERE e.teamId = :teamId AND e.status IN :statuses")
+    long countByTeamIdAndStatusIn(@Param("teamId") Long teamId, @Param("statuses") List<ExpenseStatus> statuses);
     
     // Update status
     @Modifying
