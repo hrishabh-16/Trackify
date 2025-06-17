@@ -109,6 +109,12 @@ public interface ApprovalWorkflowRepository extends JpaRepository<ApprovalWorkfl
     @Query("SELECT aw FROM ApprovalWorkflow aw ORDER BY aw.createdAt DESC")
     List<ApprovalWorkflow> findRecentWorkflows(Pageable pageable);
 
+    
+ // Find completed workflows older than cutoff time
+    @Query("SELECT aw FROM ApprovalWorkflow aw WHERE aw.status IN ('APPROVED', 'REJECTED') AND aw.updatedAt < :cutoffTime")
+    List<ApprovalWorkflow> findCompletedWorkflowsOlderThan(@Param("cutoffTime") LocalDateTime cutoffTime);
+    
+    
     // Find workflows by approval level
     List<ApprovalWorkflow> findByApprovalLevelAndStatus(Integer approvalLevel, ApprovalStatus status);
 
