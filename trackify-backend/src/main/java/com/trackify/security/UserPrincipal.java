@@ -12,6 +12,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Map;
 
 @Data
 @NoArgsConstructor
@@ -32,6 +33,11 @@ public class UserPrincipal implements UserDetails {
     private Boolean isCredentialsNonExpired;
     private Boolean emailVerified;
     private LocalDateTime lastLoginAt;
+    private Map<String, Object> attributes;
+
+    public void setAttributes(Map<String, Object> attributes) {
+        this.attributes = attributes;
+    }
 
     // Manually define the all-args constructor (instead of using @AllArgsConstructor)
     public UserPrincipal(
@@ -215,6 +221,12 @@ public class UserPrincipal implements UserDetails {
 
 	public String getPassword() {
 		return password;
+	}
+	
+	public static UserPrincipal create(User user, Map<String, Object> attributes) {
+	    UserPrincipal userPrincipal = UserPrincipal.create(user);
+	    userPrincipal.setAttributes(attributes);
+	    return userPrincipal;
 	}
 
 }
