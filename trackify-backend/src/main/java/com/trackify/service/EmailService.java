@@ -47,4 +47,8 @@ public interface EmailService {
     void sendEmail(String to, String subject, String content);
     void sendHtmlEmail(String to, String subject, String htmlContent);
     void sendEmailWithAttachment(String to, String subject, String content, String attachmentPath, String attachmentName);
+    
+    // Scheduled report emails
+    void sendScheduledReportEmail(String email, Object scheduledReportConfig, ReportResponse report, byte[] reportFile);
+    void sendScheduledReportFailureNotification(Object scheduledReportConfig, Exception error);
 }
