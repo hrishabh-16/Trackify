@@ -2,7 +2,11 @@ package com.trackify.config;
 
 import com.trackify.security.JwtAuthenticationEntryPoint;
 import com.trackify.security.JwtAuthenticationFilter;
+import com.trackify.security.OAuth2AuthenticationSuccessHandler;
+import com.trackify.security.OAuth2UserService;
 import com.trackify.security.CustomUserDetailsService;
+import com.trackify.security.HttpCookieOAuth2AuthorizationRequestRepository;
+
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,6 +49,12 @@ public class SecurityConfig {
 
     @Autowired
     private JwtConfig jwtConfig;
+    
+    @Autowired
+    private OAuth2UserService oAuth2UserService;
+
+    @Autowired
+    private OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -73,7 +83,9 @@ public class SecurityConfig {
     public JwtAuthenticationFilter jwtAuthenticationFilter() {
         return new JwtAuthenticationFilter();
     }
-
+    
+    
+    
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
@@ -95,12 +107,30 @@ public class SecurityConfig {
             // Configure exception handling
             .exceptionHandling(exception -> exception.authenticationEntryPoint(jwtAuthenticationEntryPoint))
             
+            // Configure OAuth2
+            .oauth2Login(oauth2 -> oauth2
+                .authorizationEndpoint(authorization -> authorization
+                    .baseUri("/oauth2/authorize")
+                    .authorizationRequestRepository(cookieAuthorizationRequestRepository())
+                )
+                .redirectionEndpoint(redirection -> redirection
+                    .baseUri("/oauth2/callback/*")
+                )
+                .userInfoEndpoint(userInfo -> userInfo
+                    .userService(oAuth2UserService)
+                )
+                .successHandler(oAuth2AuthenticationSuccessHandler)
+            )
+            
             // Configure authorization
             .authorizeHttpRequests(auth -> auth
                 // Public endpoints - NO authentication required
                 .requestMatchers(
                     // Auth endpoints
                     "/auth/**",
+                    
+                    // OAuth2 endpoints
+                    "/oauth2/**",
                     
                     // Test endpoints
                     "/test/**",
@@ -132,10 +162,18 @@ public class SecurityConfig {
             )
             
             // Disable unnecessary features
-            .oauth2Login(AbstractHttpConfigurer::disable)
             .formLogin(AbstractHttpConfigurer::disable)
             .httpBasic(AbstractHttpConfigurer::disable);
 
         return http.build();
     }
+
+    // Add these beans
+    @Bean
+    public HttpCookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository() {
+        return new HttpCookieOAuth2AuthorizationRequestRepository();
+    }
+
+ 
+    
 }
