@@ -625,4 +625,161 @@ public class EmailServiceImpl implements EmailService {
         
         return content.toString();
     }
+    
+    
+    @Override
+    public void sendScheduledReportEmail(String email, Object scheduledReportConfig, ReportResponse report, byte[] reportFile) {
+        logger.info("Sending scheduled report email to: {}", email);
+        
+        try {
+            // Extract config details using reflection or casting
+            String reportName = extractReportName(scheduledReportConfig);
+            String frequency = extractFrequency(scheduledReportConfig);
+            
+            Context context = new Context();
+            context.setVariable("reportName", reportName);
+            context.setVariable("frequency", frequency);
+            context.setVariable("reportType", report.getReportType());
+            context.setVariable("generatedAt", report.getGeneratedAt());
+            context.setVariable("startDate", report.getStartDate());
+            context.setVariable("endDate", report.getEndDate());
+            context.setVariable("baseUrl", baseUrl);
+            
+            String subject = String.format("Scheduled %s Report - %s", frequency, reportName);
+            
+            String htmlContent;
+            try {
+                htmlContent = templateEngine.process("email/scheduled-report", context);
+            } catch (Exception e) {
+                logger.warn("Failed to process scheduled report template, using fallback", e);
+                htmlContent = createScheduledReportFallbackContent(reportName, frequency, report);
+            }
+            
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            
+            helper.setFrom(fromAddress, fromName);
+            helper.setTo(email);
+            helper.setSubject(subject);
+            helper.setText(htmlContent, true);
+            
+            // Attach the report file
+            String fileName = String.format("%s-%s-%s.%s", 
+                reportName.replaceAll("\\s+", "-").toLowerCase(),
+                frequency.toLowerCase(),
+                LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")),
+                report.getFormat().toLowerCase());
+            
+            helper.addAttachment(fileName, () -> new ByteArrayInputStream(reportFile));
+            
+            mailSender.send(message);
+            logger.info("Scheduled report email sent successfully to: {}", email);
+            
+        } catch (Exception e) {
+            logger.error("Failed to send scheduled report email to: {}", email, e);
+            throw new RuntimeException("Failed to send scheduled report email", e);
+        }
+    }
+
+    @Override
+    public void sendScheduledReportFailureNotification(Object scheduledReportConfig, Exception error) {
+        try {
+            String reportName = extractReportName(scheduledReportConfig);
+            String createdBy = extractCreatedBy(scheduledReportConfig);
+            String frequency = extractFrequency(scheduledReportConfig);
+            
+            // Get user email
+            User user = userRepository.findByUsername(createdBy)
+                    .orElseThrow(() -> new RuntimeException("User not found: " + createdBy));
+            
+            logger.info("Sending scheduled report failure notification to: {}", user.getEmail());
+            
+            String subject = "Scheduled Report Failed - " + reportName;
+            
+            String content = String.format(
+                "Hello %s,\n\n" +
+                "Your scheduled %s report '%s' has failed to generate after multiple attempts.\n\n" +
+                "Error: %s\n\n" +
+                "The report has been temporarily disabled. Please check your report configuration " +
+                "and re-enable it if needed.\n\n" +
+                "View your scheduled reports: %s/reports/scheduled\n\n" +
+                "If this issue persists, please contact our support team.\n\n" +
+                "Best regards,\n" +
+                "Trackify Team",
+                user.getFirstName(),
+                frequency,
+                reportName,
+                error.getMessage(),
+                baseUrl
+            );
+            
+            sendEmail(user.getEmail(), subject, content);
+            
+            logger.info("Scheduled report failure notification sent to: {}", user.getEmail());
+            
+        } catch (Exception e) {
+            logger.error("Failed to send scheduled report failure notification", e);
+        }
+    }
+
+    private String extractReportName(Object config) {
+        try {
+            return (String) config.getClass().getMethod("getReportName").invoke(config);
+        } catch (Exception e) {
+            return "Unknown Report";
+        }
+    }
+
+    private String extractFrequency(Object config) {
+        try {
+            return (String) config.getClass().getMethod("getFrequency").invoke(config);
+        } catch (Exception e) {
+            return "Unknown";
+        }
+    }
+
+    private String extractCreatedBy(Object config) {
+        try {
+            return (String) config.getClass().getMethod("getCreatedBy").invoke(config);
+        } catch (Exception e) {
+            return "Unknown";
+        }
+    }
+
+    private String createScheduledReportFallbackContent(String reportName, String frequency, ReportResponse report) {
+        StringBuilder content = new StringBuilder();
+        content.append("<!DOCTYPE html>");
+        content.append("<html><head><title>Scheduled Report - ").append(reportName).append("</title></head>");
+        content.append("<body style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;'>");
+        
+        content.append("<div style='background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;'>");
+        content.append("<h1 style='color: #333; margin: 0;'>Your ").append(frequency).append(" Report is Ready</h1>");
+        content.append("</div>");
+        
+        content.append("<p>Hello,</p>");
+        content.append("<p>Your scheduled ").append(frequency.toLowerCase()).append(" report '<strong>");
+        content.append(reportName).append("</strong>' has been generated and is attached to this email.</p>");
+        
+        content.append("<div style='background-color: #ffffff; padding: 20px; border: 1px solid #dee2e6; border-radius: 4px; margin: 20px 0;'>");
+        content.append("<h3 style='margin-top: 0;'>Report Details:</h3>");
+        content.append("<ul>");
+        content.append("<li><strong>Report Type:</strong> ").append(report.getReportType()).append("</li>");
+        content.append("<li><strong>Period:</strong> ").append(report.getStartDate()).append(" to ").append(report.getEndDate()).append("</li>");
+        content.append("<li><strong>Generated:</strong> ").append(report.getGeneratedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))).append("</li>");
+        content.append("<li><strong>Format:</strong> ").append(report.getFormat()).append("</li>");
+        content.append("</ul>");
+        content.append("</div>");
+        
+        content.append("<div style='text-align: center; margin: 30px 0;'>");
+        content.append("<a href='").append(baseUrl).append("/reports' ");
+        content.append("style='background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;'>");
+        content.append("View All Reports");
+        content.append("</a>");
+        content.append("</div>");
+        
+        content.append("<p style='color: #666; font-size: 14px;'>Best regards,<br>Trackify Team</p>");
+        content.append("</body></html>");
+        
+        return content.toString();
+    }
  }
