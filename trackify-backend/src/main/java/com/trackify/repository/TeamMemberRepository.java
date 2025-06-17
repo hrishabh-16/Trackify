@@ -133,4 +133,27 @@ public interface TeamMemberRepository extends JpaRepository<TeamMember, Long> {
     // Get member activity summary
     @Query("SELECT tm FROM TeamMember tm WHERE tm.team.id = :teamId AND tm.lastActiveAt < :inactiveThreshold AND tm.isActive = true")
     List<TeamMember> findInactiveMembers(@Param("teamId") Long teamId, @Param("inactiveThreshold") LocalDateTime inactiveThreshold);
+    
+    
+
+
+    // Find pending invitation by user and invite code (non-expired)
+    @Query("SELECT tm FROM TeamMember tm WHERE tm.user.id = :userId AND tm.team.inviteCode = :inviteCode AND " +
+    		"tm.isActive = false AND tm.invitationExpiresAt > CURRENT_TIMESTAMP")
+    Optional<TeamMember> findPendingInvitationByUserAndInviteCode(@Param("userId") Long userId, 
+    		@Param("inviteCode") String inviteCode);
+
+    // Find any invitation by user and invite code (including expired)
+    @Query("SELECT tm FROM TeamMember tm WHERE tm.user.id = :userId AND tm.team.inviteCode = :inviteCode AND tm.isActive = false")
+    Optional<TeamMember> findInvitationByUserAndInviteCode(@Param("userId") Long userId, 
+    		@Param("inviteCode") String inviteCode);
+
+    // Find pending invitation by user ID and team invite code with explicit time check
+    @Query("SELECT tm FROM TeamMember tm WHERE tm.user.id = :userId AND tm.team.inviteCode = :inviteCode AND " +
+    		"tm.isActive = false AND tm.invitationExpiresAt > :currentTime")
+    Optional<TeamMember> findPendingInvitationByUserAndInviteCodeAfter(@Param("userId") Long userId, 
+    		@Param("inviteCode") String inviteCode,
+    		@Param("currentTime") LocalDateTime currentTime);		
+
+
 }
