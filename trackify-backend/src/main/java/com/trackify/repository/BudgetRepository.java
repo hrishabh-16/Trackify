@@ -34,6 +34,9 @@ public interface BudgetRepository extends JpaRepository<Budget, Long> {
     // Find by date range
     List<Budget> findByUserIdAndStartDateLessThanEqualAndEndDateGreaterThanEqual(
             Long userId, LocalDate endDate, LocalDate startDate);
+    
+ // Find expired inactive budgets
+    List<Budget> findByEndDateBeforeAndIsActiveFalse(LocalDate cutoffDate);
 
     // Find by period between dates
 //    List<Budget> findByUserIdAndPeriodBetween(Long userId, LocalDate startDate, LocalDate endDate);
