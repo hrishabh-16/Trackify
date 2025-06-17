@@ -706,6 +706,12 @@ public class ReportResponse {
             this.executionCount = 0;
         }
 
+        
+		public ScheduledReportInfo() {
+			
+		}
+
+
 		public Long getScheduleId() {
 			return scheduleId;
 		}
