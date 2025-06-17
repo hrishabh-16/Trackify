@@ -50,7 +50,10 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     long countByUserIdAndTypeAndIsReadFalse(Long userId, NotificationType type);
     long countByUserIdAndCategoryAndIsReadFalse(Long userId, String category);
     long countByUserIdAndPriorityAndIsReadFalse(Long userId, String priority);
-
+    
+    // Count old read notifications
+    long countByCreatedAtBeforeAndIsReadTrue(LocalDateTime cutoffTime);
+    
     // Find high priority unread notifications
     @Query("SELECT n FROM Notification n WHERE n.userId = :userId AND n.isRead = false AND " +
            "n.priority IN ('HIGH', 'URGENT') ORDER BY n.createdAt DESC")
@@ -112,6 +115,10 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     @Query("DELETE FROM Notification n WHERE n.isRead = true AND n.readAt < :cutoffDate")
     int deleteOldReadNotifications(@Param("cutoffDate") LocalDateTime cutoffDate);
 
+    @Modifying
+    @Query("DELETE FROM Notification n WHERE n.isRead = true AND n.createdAt < :cutoffTime")
+    int deleteByCreatedAtBeforeAndIsReadTrue(@Param("cutoffTime") LocalDateTime cutoffTime);
+    
     // Statistics queries
     @Query("SELECT n.type, COUNT(n) FROM Notification n WHERE n.userId = :userId AND " +
            "n.createdAt >= :since GROUP BY n.type")
