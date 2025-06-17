@@ -59,6 +59,33 @@ public class JwtTokenProvider {
                 .compact();
     }
     
+    public String generateTokenFromOAuth2User(OAuth2UserPrincipal oauth2UserPrincipal) {
+        Date expiryDate = new Date(System.currentTimeMillis() + jwtConfig.getExpiration());
+        
+        return Jwts.builder()
+                .setSubject(oauth2UserPrincipal.getId().toString())
+                .claim("email", oauth2UserPrincipal.getEmail())
+                .claim("role", oauth2UserPrincipal.getRole().name())
+                .claim("firstName", oauth2UserPrincipal.getFirstName())
+                .claim("lastName", oauth2UserPrincipal.getLastName())
+                .setIssuedAt(new Date())
+                .setExpiration(expiryDate)
+                .signWith(key, SignatureAlgorithm.HS512)
+                .compact();
+    }
+
+    public String generateRefreshTokenFromOAuth2User(OAuth2UserPrincipal oauth2UserPrincipal) {
+        Date expiryDate = new Date(System.currentTimeMillis() + jwtConfig.getRefreshExpiration());
+        
+        return Jwts.builder()
+                .setSubject(oauth2UserPrincipal.getId().toString())
+                .claim("type", "refresh")
+                .setIssuedAt(new Date())
+                .setExpiration(expiryDate)
+                .signWith(key, SignatureAlgorithm.HS512)
+                .compact();
+    }
+    
     public String generateTokenFromUserId(Long userId) {
         Date expiryDate = new Date(System.currentTimeMillis() + jwtConfig.getExpiration());
         
