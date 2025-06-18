@@ -294,7 +294,7 @@ public class FileServiceImpl implements FileService {
             throw new IOException("Failed to process receipt", e);
         }
     }
-    
+    //TODO for extract Text from Receipt
     @Override
     public String extractTextFromReceipt(Long receiptId) throws IOException {
         // Placeholder implementation for OCR
@@ -303,6 +303,7 @@ public class FileServiceImpl implements FileService {
         return "Sample OCR text extracted from receipt";
     }
     
+    //TODO for extract data from Receipt
     @Override
     public String extractDataFromReceipt(Long receiptId) throws IOException {
         // Placeholder implementation for data extraction
@@ -341,6 +342,8 @@ public class FileServiceImpl implements FileService {
         }
     }
     
+    
+    //TODO generate Thumbnail  from the receipt uploaded
     @Override
     public String generateThumbnail(String filePath) throws IOException {
         // Placeholder implementation for thumbnail generation
@@ -427,6 +430,8 @@ public class FileServiceImpl implements FileService {
         return "/api/files/receipts/download/" + receiptId;
     }
     
+    
+    //TODO cleanup orphaned files logic
     @Override
     public void cleanupOrphanedFiles() {
         logger.info("Starting cleanup of orphaned files");
@@ -440,6 +445,8 @@ public class FileServiceImpl implements FileService {
         }
     }
     
+    
+    //TODO cleanupOldFiles logic
     @Override
     public void cleanupOldFiles(int daysOld) {
         logger.info("Starting cleanup of files older than {} days", daysOld);
