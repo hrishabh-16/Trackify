@@ -44,6 +44,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
     
     // Find users by last login before a certain date
     List<User> findByLastLoginAtBefore(LocalDateTime cutoffTime);
+    
+    //create budget by finding user by email or username
+    @Query("SELECT u FROM User u WHERE u.username = :identifier OR u.email = :identifier")
+    Optional<User> findByUsernameOrEmail(@Param("identifier") String identifier);
 
     // Alternative method that handles null lastLoginAt values
     @Query("SELECT u FROM User u WHERE u.lastLoginAt IS NULL OR u.lastLoginAt < :cutoffTime")
