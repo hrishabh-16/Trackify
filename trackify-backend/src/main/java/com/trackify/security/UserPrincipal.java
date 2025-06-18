@@ -5,6 +5,9 @@ import com.trackify.entity.User;
 import com.trackify.enums.UserRole;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -17,6 +20,7 @@ import java.util.Map;
 @Data
 @NoArgsConstructor
 public class UserPrincipal implements UserDetails {
+	
     
     private Long id;
     private String email;
@@ -34,6 +38,9 @@ public class UserPrincipal implements UserDetails {
     private Boolean emailVerified;
     private LocalDateTime lastLoginAt;
     private Map<String, Object> attributes;
+    
+    
+    private static final Logger logger = LoggerFactory.getLogger(UserPrincipal.class);
 
     public void setAttributes(Map<String, Object> attributes) {
         this.attributes = attributes;
@@ -62,7 +69,10 @@ public class UserPrincipal implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role.name()));
+        // Make sure this returns the correct authority
+        String authority = "ROLE_" + role.name();
+        logger.debug("UserPrincipal authorities: {}", authority);
+        return Collections.singletonList(new SimpleGrantedAuthority(authority));
     }
 
     @Override
