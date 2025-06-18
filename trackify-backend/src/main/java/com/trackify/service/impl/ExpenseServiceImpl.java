@@ -1,11 +1,28 @@
 package com.trackify.service.impl;
 
+
+
+import com.itextpdf.io.exceptions.IOException;
+import com.itextpdf.text.BaseColor;
+import com.itextpdf.text.Document;
+import com.itextpdf.text.DocumentException;
+import com.itextpdf.text.Element;
+import com.itextpdf.text.Font;
+import com.itextpdf.text.FontFactory;
+import com.itextpdf.text.PageSize;
+import com.itextpdf.text.Paragraph;
+import com.itextpdf.text.Phrase;
+import com.itextpdf.text.Rectangle;
+import com.itextpdf.text.pdf.PdfPCell;
+import com.itextpdf.text.pdf.PdfPTable;
+import com.itextpdf.text.pdf.PdfWriter;
 import com.trackify.dto.request.ExpenseRequest;
 import com.trackify.dto.response.ExpenseResponse;
 import com.trackify.dto.response.ReceiptResponse;
 import com.trackify.entity.Category;
 import com.trackify.entity.Expense;
 import com.trackify.entity.Receipt;
+import com.trackify.entity.User;
 import com.trackify.enums.ExpenseStatus;
 import com.trackify.exception.BadRequestException;
 import com.trackify.exception.ForbiddenException;
@@ -13,6 +30,7 @@ import com.trackify.exception.ResourceNotFoundException;
 import com.trackify.repository.CategoryRepository;
 import com.trackify.repository.ExpenseRepository;
 import com.trackify.repository.ReceiptRepository;
+import com.trackify.repository.UserRepository;
 import com.trackify.service.ExpenseService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,13 +45,18 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.nio.charset.StandardCharsets;
 import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
+
+
 
 @Service
 @RequiredArgsConstructor
@@ -51,6 +74,10 @@ public class ExpenseServiceImpl implements ExpenseService {
     
     @Autowired
     private ReceiptRepository receiptRepository;
+    
+    
+    @Autowired
+    private UserRepository userRepository;
     
     @Autowired
     private ModelMapper modelMapper;
@@ -432,18 +459,371 @@ public class ExpenseServiceImpl implements ExpenseService {
     
     @Override
     public byte[] exportExpensesToCsv(Long userId, LocalDate startDate, LocalDate endDate) {
-        // Implementation for CSV export
         logger.info("Exporting expenses to CSV for user: {} from {} to {}", userId, startDate, endDate);
-        // This would generate CSV content and return as byte array
-        return new byte[0]; // Placeholder
+        
+        try {
+            // Get expenses for the date range
+            List<Expense> expenses = expenseRepository.findByUserIdAndDateRange(userId, startDate, endDate);
+            
+            if (expenses.isEmpty()) {
+                logger.warn("No expenses found for user: {} in date range {} to {}", userId, startDate, endDate);
+            }
+            
+            // Create CSV content
+            StringBuilder csvBuilder = new StringBuilder();
+            
+            // Add UTF-8 BOM for proper Excel compatibility
+            csvBuilder.append('\ufeff');
+            
+            // Add CSV header
+            csvBuilder.append("Date,Title,Description,Amount,Currency,Category,Status,Payment Method,Merchant,Location,Notes,Reference Number,Created Date\n");
+            
+            // Add expense data
+            for (Expense expense : expenses) {
+                csvBuilder.append(formatCsvValue(expense.getExpenseDate() != null ? expense.getExpenseDate().toString() : ""))
+                         .append(",")
+                         .append(formatCsvValue(expense.getTitle()))
+                         .append(",")
+                         .append(formatCsvValue(expense.getDescription()))
+                         .append(",")
+                         .append(formatCsvValue(expense.getAmount() != null ? expense.getAmount().toString() : "0.00"))
+                         .append(",")
+                         .append(formatCsvValue(expense.getCurrencyCode()))
+                         .append(",")
+                         .append(formatCsvValue(getCategoryName(expense.getCategoryId())))
+                         .append(",")
+                         .append(formatCsvValue(expense.getStatus() != null ? expense.getStatus().getDisplayName() : ""))
+                         .append(",")
+                         .append(formatCsvValue(expense.getPaymentMethod() != null ? expense.getPaymentMethod().name() : ""))
+                         .append(",")
+                         .append(formatCsvValue(expense.getMerchantName()))
+                         .append(",")
+                         .append(formatCsvValue(expense.getLocation()))
+                         .append(",")
+                         .append(formatCsvValue(expense.getNotes()))
+                         .append(",")
+                         .append(formatCsvValue(expense.getReferenceNumber()))
+                         .append(",")
+                         .append(formatCsvValue(expense.getCreatedAt() != null ? 
+                                 expense.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) : ""))
+                         .append("\n");
+            }
+            
+            // Add summary row
+            csvBuilder.append("\n");
+            csvBuilder.append("SUMMARY,,,,,,,,,,,,\n");
+            
+            BigDecimal totalAmount = expenses.stream()
+                    .map(Expense::getAmount)
+                    .filter(amount -> amount != null)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            
+            csvBuilder.append("Total Records: ").append(expenses.size()).append(",,,,,,,,,,,,\n");
+            csvBuilder.append("Total Amount: ").append(totalAmount).append(",,,,,,,,,,,,\n");
+            csvBuilder.append("Export Date: ").append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
+                     .append(",,,,,,,,,,,,\n");
+            
+            byte[] csvBytes = csvBuilder.toString().getBytes(StandardCharsets.UTF_8);
+            
+            logger.info("Successfully exported {} expenses to CSV for user: {}, total size: {} bytes", 
+                    expenses.size(), userId, csvBytes.length);
+            
+            return csvBytes;
+            
+        } catch (Exception e) {
+            logger.error("Error exporting expenses to CSV for user: {}", userId, e);
+            throw new RuntimeException("Failed to export expenses to CSV", e);
+        }
     }
-    
+
     @Override
     public byte[] exportExpensesToPdf(Long userId, LocalDate startDate, LocalDate endDate) {
-        // Implementation for PDF export
         logger.info("Exporting expenses to PDF for user: {} from {} to {}", userId, startDate, endDate);
-        // This would generate PDF content and return as byte array
-        return new byte[0]; // Placeholder
+        
+        try {
+            // Get expenses for the date range
+            List<Expense> expenses = expenseRepository.findByUserIdAndDateRange(userId, startDate, endDate);
+            
+            if (expenses.isEmpty()) {
+                logger.warn("No expenses found for user: {} in date range {} to {}", userId, startDate, endDate);
+            }
+            
+            // Get user information
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
+            
+            // Create PDF document
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            Document document = new Document(PageSize.A4.rotate()); // Landscape for better table display
+            PdfWriter writer = PdfWriter.getInstance(document, outputStream);
+            
+            document.open();
+            
+            // Add title
+            Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18, BaseColor.BLACK);
+            Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, BaseColor.BLACK);
+            Font normalFont = FontFactory.getFont(FontFactory.HELVETICA, 10, BaseColor.BLACK);
+            Font smallFont = FontFactory.getFont(FontFactory.HELVETICA, 8, BaseColor.BLACK);
+            
+            // Document header
+            Paragraph title = new Paragraph("Expense Report", titleFont);
+            title.setAlignment(Element.ALIGN_CENTER);
+            title.setSpacingAfter(20);
+            document.add(title);
+            
+            // Report details
+            PdfPTable headerTable = new PdfPTable(2);
+            headerTable.setWidthPercentage(100);
+            headerTable.setSpacingAfter(20);
+            
+            addCellToTable(headerTable, "User:", headerFont, Element.ALIGN_LEFT);
+            addCellToTable(headerTable, user.getFullName() + " (" + user.getEmail() + ")", normalFont, Element.ALIGN_LEFT);
+            addCellToTable(headerTable, "Period:", headerFont, Element.ALIGN_LEFT);
+            addCellToTable(headerTable, startDate + " to " + endDate, normalFont, Element.ALIGN_LEFT);
+            addCellToTable(headerTable, "Generated:", headerFont, Element.ALIGN_LEFT);
+            addCellToTable(headerTable, LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")), normalFont, Element.ALIGN_LEFT);
+            addCellToTable(headerTable, "Total Records:", headerFont, Element.ALIGN_LEFT);
+            addCellToTable(headerTable, String.valueOf(expenses.size()), normalFont, Element.ALIGN_LEFT);
+            
+            document.add(headerTable);
+            
+            if (expenses.isEmpty()) {
+                Paragraph noData = new Paragraph("No expenses found for the specified period.", normalFont);
+                noData.setAlignment(Element.ALIGN_CENTER);
+                document.add(noData);
+            } else {
+                // Create expenses table
+                PdfPTable expenseTable = new PdfPTable(9);
+                expenseTable.setWidthPercentage(100);
+                expenseTable.setSpacingBefore(10);
+                
+                // Set column widths
+                float[] columnWidths = {10f, 15f, 10f, 8f, 12f, 10f, 8f, 12f, 15f};
+                expenseTable.setWidths(columnWidths);
+                
+                // Add table headers
+                String[] headers = {"Date", "Title", "Amount", "Currency", "Category", "Status", "Payment", "Merchant", "Description"};
+                for (String header : headers) {
+                    PdfPCell headerCell = new PdfPCell(new Phrase(header, headerFont));
+                    headerCell.setBackgroundColor(BaseColor.LIGHT_GRAY);
+                    headerCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                    headerCell.setPadding(5);
+                    expenseTable.addCell(headerCell);
+                }
+                
+                // Add expense data
+                BigDecimal totalAmount = BigDecimal.ZERO;
+                
+                for (Expense expense : expenses) {
+                    // Date
+                    addCellToTable(expenseTable, 
+                            expense.getExpenseDate() != null ? expense.getExpenseDate().toString() : "", 
+                            smallFont, Element.ALIGN_CENTER);
+                    
+                    // Title
+                    addCellToTable(expenseTable, 
+                            truncateText(expense.getTitle(), 25), 
+                            smallFont, Element.ALIGN_LEFT);
+                    
+                    // Amount
+                    String amountText = expense.getAmount() != null ? 
+                            NumberFormat.getCurrencyInstance(Locale.US).format(expense.getAmount()) : "$0.00";
+                    addCellToTable(expenseTable, amountText, smallFont, Element.ALIGN_RIGHT);
+                    
+                    // Currency
+                    addCellToTable(expenseTable, expense.getCurrencyCode(), smallFont, Element.ALIGN_CENTER);
+                    
+                    // Category
+                    addCellToTable(expenseTable, 
+                            truncateText(getCategoryName(expense.getCategoryId()), 15), 
+                            smallFont, Element.ALIGN_LEFT);
+                    
+                    // Status
+                    addCellToTable(expenseTable, 
+                            expense.getStatus() != null ? expense.getStatus().getDisplayName() : "", 
+                            smallFont, Element.ALIGN_CENTER);
+                    
+                    // Payment Method
+                    addCellToTable(expenseTable, 
+                            expense.getPaymentMethod() != null ? expense.getPaymentMethod().name() : "", 
+                            smallFont, Element.ALIGN_CENTER);
+                    
+                    // Merchant
+                    addCellToTable(expenseTable, 
+                            truncateText(expense.getMerchantName(), 15), 
+                            smallFont, Element.ALIGN_LEFT);
+                    
+                    // Description
+                    addCellToTable(expenseTable, 
+                            truncateText(expense.getDescription(), 20), 
+                            smallFont, Element.ALIGN_LEFT);
+                    
+                    // Add to total
+                    if (expense.getAmount() != null) {
+                        totalAmount = totalAmount.add(expense.getAmount());
+                    }
+                }
+                
+                document.add(expenseTable);
+                
+                // Add summary section
+                PdfPTable summaryTable = new PdfPTable(2);
+                summaryTable.setWidthPercentage(50);
+                summaryTable.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                summaryTable.setSpacingBefore(20);
+                
+                addCellToTable(summaryTable, "Total Amount:", headerFont, Element.ALIGN_RIGHT);
+                addCellToTable(summaryTable, NumberFormat.getCurrencyInstance(Locale.US).format(totalAmount), 
+                        headerFont, Element.ALIGN_RIGHT);
+                
+                // Calculate average
+                BigDecimal averageAmount = expenses.size() > 0 ? 
+                        totalAmount.divide(BigDecimal.valueOf(expenses.size()), 2, RoundingMode.HALF_UP) : 
+                        BigDecimal.ZERO;
+                
+                addCellToTable(summaryTable, "Average Amount:", normalFont, Element.ALIGN_RIGHT);
+                addCellToTable(summaryTable, NumberFormat.getCurrencyInstance(Locale.US).format(averageAmount), 
+                        normalFont, Element.ALIGN_RIGHT);
+                
+                document.add(summaryTable);
+                
+                // Add category breakdown if there are expenses
+                addCategoryBreakdown(document, expenses, headerFont, normalFont);
+            }
+            
+            // Add footer
+            Paragraph footer = new Paragraph("Generated by Trackify Expense Management System", smallFont);
+            footer.setAlignment(Element.ALIGN_CENTER);
+            footer.setSpacingBefore(30);
+            document.add(footer);
+            
+            document.close();
+            writer.close();
+            
+            byte[] pdfBytes = outputStream.toByteArray();
+            outputStream.close();
+            
+            logger.info("Successfully exported {} expenses to PDF for user: {}, total size: {} bytes", 
+                    expenses.size(), userId, pdfBytes.length);
+            
+            return pdfBytes;
+            
+        } catch (DocumentException | IOException e)  {
+            logger.error("Error creating PDF document for user: {}", userId, e);
+            throw new RuntimeException("Failed to export expenses to PDF", e);
+        } catch (Exception e) {
+            logger.error("Error exporting expenses to PDF for user: {}", userId, e);
+            throw new RuntimeException("Failed to export expenses to PDF", e);
+        }
+    }
+
+    // Helper methods
+
+    private String formatCsvValue(String value) {
+        if (value == null) {
+            return "";
+        }
+        
+        // Escape quotes and wrap in quotes if contains comma, newline, or quote
+        if (value.contains(",") || value.contains("\n") || value.contains("\"")) {
+            value = "\"" + value.replace("\"", "\"\"") + "\"";
+        }
+        
+        return value;
+    }
+
+    private String getCategoryName(Long categoryId) {
+        if (categoryId == null) {
+            return "Unknown";
+        }
+        
+        try {
+            return categoryRepository.findById(categoryId)
+                    .map(category -> category.getName())
+                    .orElse("Unknown");
+        } catch (Exception e) {
+            logger.warn("Error fetching category name for ID: {}", categoryId, e);
+            return "Unknown";
+        }
+    }
+
+    private String truncateText(String text, int maxLength) {
+        if (text == null) {
+            return "";
+        }
+        
+        if (text.length() <= maxLength) {
+            return text;
+        }
+        
+        return text.substring(0, maxLength - 3) + "...";
+    }
+
+    private void addCellToTable(PdfPTable table, String text, Font font, int alignment) {
+        PdfPCell cell = new PdfPCell(new Phrase(text != null ? text : "", font));
+        cell.setHorizontalAlignment(alignment);
+        cell.setPadding(3);
+        cell.setBorder(Rectangle.BOX);
+        table.addCell(cell);
+    }
+
+    private void addCategoryBreakdown(Document document, List<Expense> expenses, Font headerFont, Font normalFont) 
+            throws DocumentException {
+        
+        // Group expenses by category
+        Map<String, List<Expense>> categoryGroups = expenses.stream()
+                .collect(Collectors.groupingBy(expense -> getCategoryName(expense.getCategoryId())));
+        
+        if (categoryGroups.size() <= 1) {
+            return; // Skip if only one or no categories
+        }
+        
+        // Add category breakdown section
+        Paragraph categoryHeader = new Paragraph("Category Breakdown", headerFont);
+        categoryHeader.setSpacingBefore(20);
+        categoryHeader.setSpacingAfter(10);
+        document.add(categoryHeader);
+        
+        PdfPTable categoryTable = new PdfPTable(3);
+        categoryTable.setWidthPercentage(70);
+        categoryTable.setHorizontalAlignment(Element.ALIGN_LEFT);
+        
+        // Headers
+        addCellToTable(categoryTable, "Category", headerFont, Element.ALIGN_LEFT);
+        addCellToTable(categoryTable, "Count", headerFont, Element.ALIGN_CENTER);
+        addCellToTable(categoryTable, "Total Amount", headerFont, Element.ALIGN_RIGHT);
+        
+        // Sort categories by total amount (descending)
+        List<Map.Entry<String, List<Expense>>> sortedCategories = categoryGroups.entrySet().stream()
+                .sorted((e1, e2) -> {
+                    BigDecimal total1 = e1.getValue().stream()
+                            .map(Expense::getAmount)
+                            .filter(amount -> amount != null)
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    BigDecimal total2 = e2.getValue().stream()
+                            .map(Expense::getAmount)
+                            .filter(amount -> amount != null)
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    return total2.compareTo(total1);
+                })
+                .collect(Collectors.toList());
+        
+        for (Map.Entry<String, List<Expense>> entry : sortedCategories) {
+            String categoryName = entry.getKey();
+            List<Expense> categoryExpenses = entry.getValue();
+            
+            BigDecimal categoryTotal = categoryExpenses.stream()
+                    .map(Expense::getAmount)
+                    .filter(amount -> amount != null)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            
+            addCellToTable(categoryTable, categoryName, normalFont, Element.ALIGN_LEFT);
+            addCellToTable(categoryTable, String.valueOf(categoryExpenses.size()), normalFont, Element.ALIGN_CENTER);
+            addCellToTable(categoryTable, NumberFormat.getCurrencyInstance(Locale.US).format(categoryTotal), 
+                    normalFont, Element.ALIGN_RIGHT);
+        }
+        
+        document.add(categoryTable);
     }
     
     // Private helper methods
