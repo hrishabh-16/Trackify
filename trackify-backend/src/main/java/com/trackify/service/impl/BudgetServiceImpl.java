@@ -58,7 +58,7 @@ public class BudgetServiceImpl implements BudgetService {
         try {
             logger.info("Creating budget: {} by user: {}", budgetRequest.getName(), username);
 
-            User user = userRepository.findByUsername(username)
+            User user = userRepository.findByUsernameOrEmail(username)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
 
             // Validate date range
@@ -206,7 +206,7 @@ public class BudgetServiceImpl implements BudgetService {
     @Transactional(readOnly = true)
     public List<BudgetResponse> getUserBudgets(String username) {
         try {
-            User user = userRepository.findByUsername(username)
+            User user = userRepository.findByUsernameOrEmail(username)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
 
             List<Budget> budgets = budgetRepository.findByUserId(user.getId());
@@ -225,7 +225,7 @@ public class BudgetServiceImpl implements BudgetService {
     @Transactional(readOnly = true)
     public Page<BudgetResponse> getUserBudgets(String username, Pageable pageable) {
         try {
-            User user = userRepository.findByUsername(username)
+            User user = userRepository.findByUsernameOrEmail(username)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
 
             Page<Budget> budgets = budgetRepository.findByUserId(user.getId(), pageable);
@@ -306,7 +306,7 @@ public class BudgetServiceImpl implements BudgetService {
     @Transactional(readOnly = true)
     public List<BudgetResponse> getActiveBudgets(String username) {
         try {
-            User user = userRepository.findByUsername(username)
+            User user = userRepository.findByUsernameOrEmail(username)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
 
             List<Budget> budgets = budgetRepository.findActiveBudgetsByUser(user.getId(), LocalDate.now());
@@ -325,7 +325,7 @@ public class BudgetServiceImpl implements BudgetService {
     @Transactional(readOnly = true)
     public List<BudgetResponse> getBudgetsByCategory(Long categoryId, String username) {
         try {
-            User user = userRepository.findByUsername(username)
+            User user = userRepository.findByUsernameOrEmail(username)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
 
             List<Budget> budgets = budgetRepository.findByUserIdAndCategoryId(user.getId(), categoryId);
@@ -360,7 +360,7 @@ public class BudgetServiceImpl implements BudgetService {
     @Transactional(readOnly = true)
     public List<BudgetResponse> getBudgetsByDateRange(String username, LocalDate startDate, LocalDate endDate) {
         try {
-            User user = userRepository.findByUsername(username)
+            User user = userRepository.findByUsernameOrEmail(username)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
 
             List<Budget> budgets = budgetRepository.findByUserIdAndPeriodOverlap(user.getId(), startDate, endDate);
@@ -379,7 +379,7 @@ public class BudgetServiceImpl implements BudgetService {
     @Transactional(readOnly = true)
     public List<BudgetResponse> searchBudgets(String username, String keyword) {
         try {
-            User user = userRepository.findByUsername(username)
+            User user = userRepository.findByUsernameOrEmail(username)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
 
             List<Budget> budgets = budgetRepository.searchBudgets(user.getId(), keyword);
@@ -398,7 +398,7 @@ public class BudgetServiceImpl implements BudgetService {
     @Transactional(readOnly = true)
     public BudgetResponse.BudgetAnalytics getBudgetAnalytics(String username) {
         try {
-            User user = userRepository.findByUsername(username)
+            User user = userRepository.findByUsernameOrEmail(username)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
 
             BigDecimal totalBudgeted = budgetRepository.getTotalBudgetAmountByUser(user.getId());
@@ -429,7 +429,7 @@ public class BudgetServiceImpl implements BudgetService {
     @Transactional(readOnly = true)
     public List<BudgetResponse> getBudgetsNearThreshold(String username) {
         try {
-            User user = userRepository.findByUsername(username)
+            User user = userRepository.findByUsernameOrEmail(username)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
 
             List<Budget> budgets = budgetRepository.findBudgetsNearThresholdByUser(user.getId());
@@ -448,7 +448,7 @@ public class BudgetServiceImpl implements BudgetService {
     @Transactional(readOnly = true)
     public List<BudgetResponse> getOverBudgets(String username) {
         try {
-            User user = userRepository.findByUsername(username)
+            User user = userRepository.findByUsernameOrEmail(username)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
 
             List<Budget> budgets = budgetRepository.findOverBudgetsByUser(user.getId());
@@ -467,7 +467,7 @@ public class BudgetServiceImpl implements BudgetService {
     @Transactional(readOnly = true)
     public List<BudgetResponse> getExpiredBudgets(String username) {
         try {
-            User user = userRepository.findByUsername(username)
+            User user = userRepository.findByUsernameOrEmail(username)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
 
             List<Budget> budgets = budgetRepository.findExpiredBudgetsByUser(user.getId(), LocalDate.now());
@@ -627,7 +627,7 @@ public class BudgetServiceImpl implements BudgetService {
     @Transactional(readOnly = true)
     public List<BudgetResponse> getRecurringBudgets(String username) {
         try {
-            User user = userRepository.findByUsername(username)
+            User user = userRepository.findByUsernameOrEmail(username)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
 
             List<Budget> budgets = budgetRepository.findByUserIdAndIsRecurringTrue(user.getId());
@@ -785,7 +785,7 @@ public class BudgetServiceImpl implements BudgetService {
     @Transactional(readOnly = true)
     public boolean validateBudgetOverlap(String username, Long categoryId, LocalDate startDate, LocalDate endDate, Long excludeId) {
         try {
-            User user = userRepository.findByUsername(username)
+            User user = userRepository.findByUsernameOrEmail(username)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
 
             return budgetRepository.hasOverlappingBudget(user.getId(), categoryId, startDate, endDate, excludeId);
@@ -798,7 +798,7 @@ public class BudgetServiceImpl implements BudgetService {
 
     @Override
     public void validateBudgetAccess(Long budgetId, String username) {
-        User user = userRepository.findByUsername(username)
+        User user = userRepository.findByUsernameOrEmail(username)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
 
         Budget budget = getBudgetEntity(budgetId);
@@ -851,7 +851,7 @@ public class BudgetServiceImpl implements BudgetService {
     @Transactional(readOnly = true)
     public List<BudgetResponse.BudgetSummary> getBudgetSummariesForDashboard(String username) {
         try {
-            User user = userRepository.findByUsername(username)
+            User user = userRepository.findByUsernameOrEmail(username)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
 
             LocalDate now = LocalDate.now();
