@@ -2,9 +2,6 @@ package com.trackify.entity;
 
 import com.trackify.enums.TeamRole;
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -16,9 +13,6 @@ import java.util.List;
 @Entity
 @Table(name = "teams")
 @EntityListeners(AuditingEntityListener.class)
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class Team {
 
     @Id
@@ -67,6 +61,30 @@ public class Team {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    // Default constructor (REQUIRED by Hibernate)
+    public Team() {
+    }
+
+    // All args constructor
+    public Team(Long id, String name, String description, User owner, Boolean isActive, Integer maxMembers,
+               String inviteCode, Boolean autoApproveMembers, String currency, List<TeamMember> members,
+               List<Expense> expenses, List<Budget> budgets, LocalDateTime createdAt, LocalDateTime updatedAt) {
+        this.id = id;
+        this.name = name;
+        this.description = description;
+        this.owner = owner;
+        this.isActive = isActive;
+        this.maxMembers = maxMembers;
+        this.inviteCode = inviteCode;
+        this.autoApproveMembers = autoApproveMembers;
+        this.currency = currency;
+        this.members = members;
+        this.expenses = expenses;
+        this.budgets = budgets;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
+
     // Custom constructors
     public Team(String name, String description, User owner) {
         this.name = name;
@@ -85,6 +103,119 @@ public class Team {
         this.autoApproveMembers = false;
         this.currency = "USD";
         this.maxMembers = 50;
+    }
+
+    // Getters and Setters
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public User getOwner() {
+        return owner;
+    }
+
+    public void setOwner(User owner) {
+        this.owner = owner;
+    }
+
+    public Boolean getIsActive() {
+        return isActive;
+    }
+
+    public void setIsActive(Boolean isActive) {
+        this.isActive = isActive;
+    }
+
+    public Integer getMaxMembers() {
+        return maxMembers;
+    }
+
+    public void setMaxMembers(Integer maxMembers) {
+        this.maxMembers = maxMembers;
+    }
+
+    public String getInviteCode() {
+        return inviteCode;
+    }
+
+    public void setInviteCode(String inviteCode) {
+        this.inviteCode = inviteCode;
+    }
+
+    public Boolean getAutoApproveMembers() {
+        return autoApproveMembers;
+    }
+
+    public void setAutoApproveMembers(Boolean autoApproveMembers) {
+        this.autoApproveMembers = autoApproveMembers;
+    }
+
+    public String getCurrency() {
+        return currency;
+    }
+
+    public void setCurrency(String currency) {
+        this.currency = currency;
+    }
+
+    public List<TeamMember> getMembers() {
+        return members;
+    }
+
+    public void setMembers(List<TeamMember> members) {
+        this.members = members;
+    }
+
+    public List<Expense> getExpenses() {
+        return expenses;
+    }
+
+    public void setExpenses(List<Expense> expenses) {
+        this.expenses = expenses;
+    }
+
+    public List<Budget> getBudgets() {
+        return budgets;
+    }
+
+    public void setBudgets(List<Budget> budgets) {
+        this.budgets = budgets;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
     }
 
     // Helper methods
@@ -168,117 +299,54 @@ public class Team {
                 .toList() : new ArrayList<>();
     }
 
-	public Long getId() {
-		return id;
-	}
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        
+        Team team = (Team) obj;
+        
+        if (id != null ? !id.equals(team.id) : team.id != null) return false;
+        if (name != null ? !name.equals(team.name) : team.name != null) return false;
+        if (description != null ? !description.equals(team.description) : team.description != null) return false;
+        if (owner != null ? !owner.equals(team.owner) : team.owner != null) return false;
+        if (isActive != null ? !isActive.equals(team.isActive) : team.isActive != null) return false;
+        if (maxMembers != null ? !maxMembers.equals(team.maxMembers) : team.maxMembers != null) return false;
+        if (inviteCode != null ? !inviteCode.equals(team.inviteCode) : team.inviteCode != null) return false;
+        if (autoApproveMembers != null ? !autoApproveMembers.equals(team.autoApproveMembers) : team.autoApproveMembers != null) return false;
+        return currency != null ? currency.equals(team.currency) : team.currency == null;
+    }
 
-	public void setId(Long id) {
-		this.id = id;
-	}
+    @Override
+    public int hashCode() {
+        int result = id != null ? id.hashCode() : 0;
+        result = 31 * result + (name != null ? name.hashCode() : 0);
+        result = 31 * result + (description != null ? description.hashCode() : 0);
+        result = 31 * result + (owner != null ? owner.hashCode() : 0);
+        result = 31 * result + (isActive != null ? isActive.hashCode() : 0);
+        result = 31 * result + (maxMembers != null ? maxMembers.hashCode() : 0);
+        result = 31 * result + (inviteCode != null ? inviteCode.hashCode() : 0);
+        result = 31 * result + (autoApproveMembers != null ? autoApproveMembers.hashCode() : 0);
+        result = 31 * result + (currency != null ? currency.hashCode() : 0);
+        return result;
+    }
 
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	public String getDescription() {
-		return description;
-	}
-
-	public void setDescription(String description) {
-		this.description = description;
-	}
-
-	public User getOwner() {
-		return owner;
-	}
-
-	public void setOwner(User owner) {
-		this.owner = owner;
-	}
-
-	public Boolean getIsActive() {
-		return isActive;
-	}
-
-	public void setIsActive(Boolean isActive) {
-		this.isActive = isActive;
-	}
-
-	public Integer getMaxMembers() {
-		return maxMembers;
-	}
-
-	public void setMaxMembers(Integer maxMembers) {
-		this.maxMembers = maxMembers;
-	}
-
-	public String getInviteCode() {
-		return inviteCode;
-	}
-
-	public void setInviteCode(String inviteCode) {
-		this.inviteCode = inviteCode;
-	}
-
-	public Boolean getAutoApproveMembers() {
-		return autoApproveMembers;
-	}
-
-	public void setAutoApproveMembers(Boolean autoApproveMembers) {
-		this.autoApproveMembers = autoApproveMembers;
-	}
-
-	public String getCurrency() {
-		return currency;
-	}
-
-	public void setCurrency(String currency) {
-		this.currency = currency;
-	}
-
-	public List<TeamMember> getMembers() {
-		return members;
-	}
-
-	public void setMembers(List<TeamMember> members) {
-		this.members = members;
-	}
-
-	public List<Expense> getExpenses() {
-		return expenses;
-	}
-
-	public void setExpenses(List<Expense> expenses) {
-		this.expenses = expenses;
-	}
-
-	public List<Budget> getBudgets() {
-		return budgets;
-	}
-
-	public void setBudgets(List<Budget> budgets) {
-		this.budgets = budgets;
-	}
-
-	public LocalDateTime getCreatedAt() {
-		return createdAt;
-	}
-
-	public void setCreatedAt(LocalDateTime createdAt) {
-		this.createdAt = createdAt;
-	}
-
-	public LocalDateTime getUpdatedAt() {
-		return updatedAt;
-	}
-
-	public void setUpdatedAt(LocalDateTime updatedAt) {
-		this.updatedAt = updatedAt;
-	}
+    @Override
+    public String toString() {
+        return "Team{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", description='" + description + '\'' +
+                ", isActive=" + isActive +
+                ", maxMembers=" + maxMembers +
+                ", inviteCode='" + inviteCode + '\'' +
+                ", autoApproveMembers=" + autoApproveMembers +
+                ", currency='" + currency + '\'' +
+                ", memberCount=" + getMemberCount() +
+                ", createdAt=" + createdAt +
+                ", updatedAt=" + updatedAt +
+                '}';
+    }
     
     
 }
