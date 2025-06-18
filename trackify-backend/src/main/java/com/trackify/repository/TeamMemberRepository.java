@@ -19,7 +19,6 @@ public interface TeamMemberRepository extends JpaRepository<TeamMember, Long> {
     // Find by team
     List<TeamMember> findByTeamId(Long teamId);
     List<TeamMember> findByTeamIdAndIsActiveTrue(Long teamId);
-    Page<TeamMember> findByTeamIdAndIsActiveTrue(Long teamId, Pageable pageable);
     
     // Find by user
     List<TeamMember> findByUserId(Long userId);
@@ -28,6 +27,86 @@ public interface TeamMemberRepository extends JpaRepository<TeamMember, Long> {
     // Find by team and user
     Optional<TeamMember> findByTeamIdAndUserId(Long teamId, Long userId);
     Optional<TeamMember> findByTeamIdAndUserIdAndIsActiveTrue(Long teamId, Long userId);
+    
+    // Main method for paginated results with proper JOIN FETCH
+    @Query("SELECT tm FROM TeamMember tm " +
+           "JOIN FETCH tm.user u " +
+           "JOIN FETCH tm.team t " +
+           "WHERE tm.team.id = :teamId AND tm.isActive = true")
+    Page<TeamMember> findByTeamIdAndIsActiveTrue(@Param("teamId") Long teamId, Pageable pageable);
+    
+    // Custom methods for specific sorting scenarios - using correct field names
+    @Query("SELECT tm FROM TeamMember tm " +
+           "JOIN FETCH tm.user u " +
+           "JOIN FETCH tm.team t " +
+           "WHERE tm.team.id = :teamId AND tm.isActive = true " +
+           "ORDER BY u.firstName ASC, u.lastName ASC")
+    Page<TeamMember> findByTeamIdAndIsActiveTrueSortByName(@Param("teamId") Long teamId, Pageable pageable);
+    
+    @Query("SELECT tm FROM TeamMember tm " +
+           "JOIN FETCH tm.user u " +
+           "JOIN FETCH tm.team t " +
+           "WHERE tm.team.id = :teamId AND tm.isActive = true " +
+           "ORDER BY u.firstName DESC, u.lastName DESC")
+    Page<TeamMember> findByTeamIdAndIsActiveTrueSortByNameDesc(@Param("teamId") Long teamId, Pageable pageable);
+    
+    @Query("SELECT tm FROM TeamMember tm " +
+           "JOIN FETCH tm.user u " +
+           "JOIN FETCH tm.team t " +
+           "WHERE tm.team.id = :teamId AND tm.isActive = true " +
+           "ORDER BY u.email ASC")
+    Page<TeamMember> findByTeamIdAndIsActiveTrueSortByEmail(@Param("teamId") Long teamId, Pageable pageable);
+    
+    @Query("SELECT tm FROM TeamMember tm " +
+           "JOIN FETCH tm.user u " +
+           "JOIN FETCH tm.team t " +
+           "WHERE tm.team.id = :teamId AND tm.isActive = true " +
+           "ORDER BY u.email DESC")
+    Page<TeamMember> findByTeamIdAndIsActiveTrueSortByEmailDesc(@Param("teamId") Long teamId, Pageable pageable);
+    
+    @Query("SELECT tm FROM TeamMember tm " +
+           "JOIN FETCH tm.user u " +
+           "JOIN FETCH tm.team t " +
+           "WHERE tm.team.id = :teamId AND tm.isActive = true " +
+           "ORDER BY tm.role ASC")
+    Page<TeamMember> findByTeamIdAndIsActiveTrueSortByRole(@Param("teamId") Long teamId, Pageable pageable);
+    
+    @Query("SELECT tm FROM TeamMember tm " +
+           "JOIN FETCH tm.user u " +
+           "JOIN FETCH tm.team t " +
+           "WHERE tm.team.id = :teamId AND tm.isActive = true " +
+           "ORDER BY tm.role DESC")
+    Page<TeamMember> findByTeamIdAndIsActiveTrueSortByRoleDesc(@Param("teamId") Long teamId, Pageable pageable);
+    
+    // Using common field names - try these variations based on your entity
+    @Query("SELECT tm FROM TeamMember tm " +
+           "JOIN FETCH tm.user u " +
+           "JOIN FETCH tm.team t " +
+           "WHERE tm.team.id = :teamId AND tm.isActive = true " +
+           "ORDER BY tm.joinedAt ASC")
+    Page<TeamMember> findByTeamIdAndIsActiveTrueSortByJoinedAt(@Param("teamId") Long teamId, Pageable pageable);
+    
+    @Query("SELECT tm FROM TeamMember tm " +
+           "JOIN FETCH tm.user u " +
+           "JOIN FETCH tm.team t " +
+           "WHERE tm.team.id = :teamId AND tm.isActive = true " +
+           "ORDER BY tm.joinedAt DESC")
+    Page<TeamMember> findByTeamIdAndIsActiveTrueSortByJoinedAtDesc(@Param("teamId") Long teamId, Pageable pageable);
+    
+    // Alternative if your field is named differently
+    @Query("SELECT tm FROM TeamMember tm " +
+           "JOIN FETCH tm.user u " +
+           "JOIN FETCH tm.team t " +
+           "WHERE tm.team.id = :teamId AND tm.isActive = true " +
+           "ORDER BY tm.id ASC")
+    Page<TeamMember> findByTeamIdAndIsActiveTrueSortById(@Param("teamId") Long teamId, Pageable pageable);
+    
+    @Query("SELECT tm FROM TeamMember tm " +
+           "JOIN FETCH tm.user u " +
+           "JOIN FETCH tm.team t " +
+           "WHERE tm.team.id = :teamId AND tm.isActive = true " +
+           "ORDER BY tm.id DESC")
+    Page<TeamMember> findByTeamIdAndIsActiveTrueSortByIdDesc(@Param("teamId") Long teamId, Pageable pageable);
     
     // Find by role
     List<TeamMember> findByRole(TeamRole role);
@@ -134,26 +213,21 @@ public interface TeamMemberRepository extends JpaRepository<TeamMember, Long> {
     @Query("SELECT tm FROM TeamMember tm WHERE tm.team.id = :teamId AND tm.lastActiveAt < :inactiveThreshold AND tm.isActive = true")
     List<TeamMember> findInactiveMembers(@Param("teamId") Long teamId, @Param("inactiveThreshold") LocalDateTime inactiveThreshold);
     
-    
-
-
     // Find pending invitation by user and invite code (non-expired)
     @Query("SELECT tm FROM TeamMember tm WHERE tm.user.id = :userId AND tm.team.inviteCode = :inviteCode AND " +
-    		"tm.isActive = false AND tm.invitationExpiresAt > CURRENT_TIMESTAMP")
+           "tm.isActive = false AND tm.invitationExpiresAt > CURRENT_TIMESTAMP")
     Optional<TeamMember> findPendingInvitationByUserAndInviteCode(@Param("userId") Long userId, 
-    		@Param("inviteCode") String inviteCode);
+           @Param("inviteCode") String inviteCode);
 
     // Find any invitation by user and invite code (including expired)
     @Query("SELECT tm FROM TeamMember tm WHERE tm.user.id = :userId AND tm.team.inviteCode = :inviteCode AND tm.isActive = false")
     Optional<TeamMember> findInvitationByUserAndInviteCode(@Param("userId") Long userId, 
-    		@Param("inviteCode") String inviteCode);
+           @Param("inviteCode") String inviteCode);
 
     // Find pending invitation by user ID and team invite code with explicit time check
     @Query("SELECT tm FROM TeamMember tm WHERE tm.user.id = :userId AND tm.team.inviteCode = :inviteCode AND " +
-    		"tm.isActive = false AND tm.invitationExpiresAt > :currentTime")
+           "tm.isActive = false AND tm.invitationExpiresAt > :currentTime")
     Optional<TeamMember> findPendingInvitationByUserAndInviteCodeAfter(@Param("userId") Long userId, 
-    		@Param("inviteCode") String inviteCode,
-    		@Param("currentTime") LocalDateTime currentTime);		
-
-
+           @Param("inviteCode") String inviteCode,
+           @Param("currentTime") LocalDateTime currentTime);
 }
