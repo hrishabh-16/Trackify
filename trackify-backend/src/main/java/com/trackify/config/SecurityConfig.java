@@ -12,7 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Lazy;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -84,8 +84,6 @@ public class SecurityConfig {
         return new JwtAuthenticationFilter();
     }
     
-    
-    
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
@@ -122,18 +120,23 @@ public class SecurityConfig {
                 .successHandler(oAuth2AuthenticationSuccessHandler)
             )
             
-            // Configure authorization
+            // Configure authorization with specific rules
             .authorizeHttpRequests(auth -> auth
                 // Public endpoints - NO authentication required
                 .requestMatchers(
                     // Auth endpoints
                     "/auth/**",
+                    "/api/auth/**",
                     
                     // OAuth2 endpoints
                     "/oauth2/**",
                     
                     // Test endpoints
                     "/test/**",
+                    
+                    // Debug endpoints (temporary - remove in production)
+                    "/api/debug/**",
+                    "/debug/**",
                     
                     // Actuator endpoints
                     "/actuator/**",
@@ -157,6 +160,24 @@ public class SecurityConfig {
                     "/h2-console/**"
                 ).permitAll()
                 
+                // User endpoints with specific rules - CORRECTED PATHS
+                .requestMatchers("/users/me").authenticated() // Any authenticated user can access their own profile
+                .requestMatchers("/users/**").hasRole("ADMIN") // Only admins can access user management
+                
+                // If you also have /api/users endpoints, add these too
+                .requestMatchers("/api/users/me").authenticated()
+                .requestMatchers("/api/users/**").hasRole("ADMIN")
+                
+                // Team endpoints - support both /api and direct paths
+                .requestMatchers(HttpMethod.GET, "/teams/*/members/**").authenticated()
+                .requestMatchers("/teams/**").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/teams/*/members/**").authenticated()
+                .requestMatchers("/api/teams/**").authenticated()
+                
+                // Notification endpoints
+                .requestMatchers("/api/notifications/**").authenticated()
+                .requestMatchers("/notifications/**").authenticated()
+                
                 // All other requests require authentication
                 .anyRequest().authenticated()
             )
@@ -168,12 +189,8 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // Add these beans
     @Bean
     public HttpCookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository() {
         return new HttpCookieOAuth2AuthorizationRequestRepository();
     }
-
- 
-    
 }
