@@ -2,6 +2,7 @@ package com.trackify.service.impl;
 
 import com.trackify.dto.request.TeamRequest;
 import com.trackify.dto.response.TeamResponse;
+import com.trackify.dto.response.TeamResponse.TeamMemberInfo;
 import com.trackify.entity.Team;
 import com.trackify.entity.TeamMember;
 import com.trackify.entity.User;
@@ -19,16 +20,65 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+
+//iText PDF imports
+import com.itextpdf.kernel.pdf.PdfDocument;
+import com.itextpdf.kernel.pdf.PdfWriter;
+import com.itextpdf.kernel.pdf.canvas.draw.SolidLine;
+import com.itextpdf.kernel.geom.PageSize;
+import com.itextpdf.layout.Document;
+import com.itextpdf.layout.element.Cell;
+import com.itextpdf.layout.element.LineSeparator;
+import com.itextpdf.layout.element.Paragraph;
+import com.itextpdf.layout.element.Table;
+import com.itextpdf.layout.element.Text;
+import com.itextpdf.layout.properties.TextAlignment;
+import com.itextpdf.layout.properties.UnitValue;
+import com.itextpdf.layout.borders.Border;
+import com.itextpdf.layout.borders.SolidBorder;
+import com.itextpdf.kernel.font.PdfFont;
+import com.itextpdf.kernel.font.PdfFontFactory;
+import com.itextpdf.io.font.constants.StandardFonts;
+import com.itextpdf.kernel.colors.Color;
+import com.itextpdf.kernel.colors.ColorConstants;
+import com.itextpdf.kernel.colors.DeviceRgb;
+
+
+//Apache Commons CSV
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVPrinter;
+import org.apache.commons.csv.QuoteMode;
+
+//Java I/O and encoding
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
+import java.time.temporal.ChronoUnit;
+import java.time.format.DateTimeFormatter;
+import java.time.LocalDateTime;
+
+//Collections
+import java.util.Map;
+import java.util.stream.Collectors;
+
+//Java imports
+import java.io.ByteArrayOutputStream;
+import java.time.format.DateTimeFormatter;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -749,20 +799,76 @@ public class TeamServiceImpl implements TeamService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<TeamResponse.TeamMemberInfo> getTeamMembers(Long teamId, String username, Pageable pageable) {
+    public Page<TeamMemberInfo> getTeamMembers(Long teamId, String username, Pageable pageable) {
         try {
             validateTeamAccess(teamId, username);
-
-            Page<TeamMember> members = teamMemberRepository.findByTeamIdAndIsActiveTrue(teamId, pageable);
+            
+            Page<TeamMember> members = getTeamMembersWithSort(teamId, pageable);
             
             return members.map(this::convertToTeamMemberInfo);
-
+            
         } catch (Exception e) {
             logger.error("Error getting team members page for team: {} by user: {}", teamId, username, e);
             throw e;
         }
     }
 
+    private Page<TeamMember> getTeamMembersWithSort(Long teamId, Pageable pageable) {
+        // Check if sorting is requested
+        if (!pageable.getSort().isSorted()) {
+            // Default: no sorting, use original method
+            return teamMemberRepository.findByTeamIdAndIsActiveTrue(teamId, 
+                PageRequest.of(pageable.getPageNumber(), pageable.getPageSize()));
+        }
+        
+        // Get the first sort order
+        Sort.Order order = pageable.getSort().iterator().next();
+        String property = order.getProperty().toLowerCase();
+        boolean isAscending = order.getDirection() == Sort.Direction.ASC;
+        
+        // Create unsorted pageable for the custom queries
+        Pageable unsortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+        
+        // Route to appropriate method based on sort property and direction
+        switch (property) {
+            case "name":
+            case "firstname":
+            case "first_name":
+            case "lastname":
+            case "last_name":
+                return isAscending ? 
+                    teamMemberRepository.findByTeamIdAndIsActiveTrueSortByName(teamId, unsortedPageable) :
+                    teamMemberRepository.findByTeamIdAndIsActiveTrueSortByNameDesc(teamId, unsortedPageable);
+                    
+            case "email":
+                return isAscending ? 
+                    teamMemberRepository.findByTeamIdAndIsActiveTrueSortByEmail(teamId, unsortedPageable) :
+                    teamMemberRepository.findByTeamIdAndIsActiveTrueSortByEmailDesc(teamId, unsortedPageable);
+                    
+            case "role":
+                return isAscending ? 
+                    teamMemberRepository.findByTeamIdAndIsActiveTrueSortByRole(teamId, unsortedPageable) :
+                    teamMemberRepository.findByTeamIdAndIsActiveTrueSortByRoleDesc(teamId, unsortedPageable);
+                    
+            case "createdat":
+            case "created_at":
+            case "joinedat":
+            case "joined_at":
+                return isAscending ? 
+                    teamMemberRepository.findByTeamIdAndIsActiveTrueSortByJoinedAt(teamId, unsortedPageable) :
+                    teamMemberRepository.findByTeamIdAndIsActiveTrueSortByJoinedAtDesc(teamId, unsortedPageable);
+                    
+            case "id":
+                return isAscending ? 
+                    teamMemberRepository.findByTeamIdAndIsActiveTrueSortById(teamId, unsortedPageable) :
+                    teamMemberRepository.findByTeamIdAndIsActiveTrueSortByIdDesc(teamId, unsortedPageable);
+                    
+            default:
+                // For unknown properties, fall back to unsorted
+                logger.warn("Unknown sort property '{}', using default sorting by name", property);
+                return teamMemberRepository.findByTeamIdAndIsActiveTrueSortByName(teamId, unsortedPageable);
+        }
+    }
     @Override
     @Transactional(readOnly = true)
     public List<TeamResponse.TeamMemberInfo> searchTeamMembers(Long teamId, String searchTerm, String username) {
@@ -1347,41 +1453,626 @@ public class TeamServiceImpl implements TeamService {
     @Transactional(readOnly = true)
     public byte[] exportTeamMembersToCSV(Long teamId, String username) {
         try {
+            logger.info("Starting CSV export for team: {} by user: {}", teamId, username);
+            
+            validateTeamAccess(teamId, username);
+            
+            // Get team and members data
+            Team team = getTeamEntityById(teamId);
             List<TeamResponse.TeamMemberInfo> members = exportTeamMembers(teamId, username);
             
-            StringBuilder csv = new StringBuilder();
-            csv.append("Username,Full Name,Email,Role,Joined Date,Last Active\n");
+            logger.info("Found {} members for team: {} to export to CSV", members.size(), teamId);
             
-            for (TeamResponse.TeamMemberInfo member : members) {
-                csv.append(String.format("%s,%s,%s,%s,%s,%s\n",
-                        member.getUsername(),
-                        member.getFullName(),
-                        member.getEmail(),
-                        member.getRole().getDisplayName(),
-                        member.getJoinedAt(),
-                        member.getLastActiveAt()));
+            // Use ByteArrayOutputStream for better memory management
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            
+            try (OutputStreamWriter writer = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8);
+                 CSVPrinter csvPrinter = new CSVPrinter(writer, createCSVFormat())) {
+                
+                // Add BOM for Excel compatibility
+                outputStream.write(0xEF);
+                outputStream.write(0xBB);
+                outputStream.write(0xBF);
+                
+                // Add team information header
+                addTeamInfoToCSV(csvPrinter, team);
+                
+                // Add empty line
+                csvPrinter.println();
+                
+                // Add summary statistics
+                addSummaryToCSV(csvPrinter, members);
+                
+                // Add empty line
+                csvPrinter.println();
+                
+                // Add member data headers
+                addMemberHeaders(csvPrinter);
+                
+                // Add member data
+                addMemberData(csvPrinter, members);
+                
+                // Add export metadata
+                addExportMetadata(csvPrinter, username);
+                
+                csvPrinter.flush();
+                
+            } catch (IOException e) {
+                logger.error("Error writing CSV data for team: {}", teamId, e);
+                throw new RuntimeException("Failed to write CSV data", e);
             }
             
-            return csv.toString().getBytes();
-
+            byte[] csvBytes = outputStream.toByteArray();
+            
+            logger.info("CSV export completed for team: {}, size: {} bytes", teamId, csvBytes.length);
+            
+            return csvBytes;
+            
         } catch (Exception e) {
             logger.error("Error exporting team members to CSV for team: {} by user: {}", teamId, username, e);
-            throw e;
+            throw new RuntimeException("Failed to export CSV: " + e.getMessage(), e);
         }
     }
 
+    private CSVFormat createCSVFormat() {
+        return CSVFormat.DEFAULT
+                .builder()
+                .setHeader() // We'll add headers manually for better control
+                .setQuoteMode(QuoteMode.MINIMAL)
+                .setEscape('\\')
+                .setNullString("")
+                .setRecordSeparator("\r\n") // Windows-style line endings for better compatibility
+                .build();
+    }
+
+    private void addTeamInfoToCSV(CSVPrinter csvPrinter, Team team) throws IOException {
+        // Team information section
+        csvPrinter.printComment("=== TEAM INFORMATION ===");
+        csvPrinter.printRecord("Field", "Value");
+        csvPrinter.printRecord("Team Name", cleanCSVValue(team.getName()));
+        csvPrinter.printRecord("Description", cleanCSVValue(team.getDescription()));
+        csvPrinter.printRecord("Owner", cleanCSVValue(team.getOwner().getFirstName() + " " + team.getOwner().getLastName()));
+        csvPrinter.printRecord("Owner Email", cleanCSVValue(team.getOwner().getEmail()));
+        csvPrinter.printRecord("Currency", cleanCSVValue(team.getCurrency()));
+        csvPrinter.printRecord("Maximum Members", String.valueOf(team.getMaxMembers()));
+        csvPrinter.printRecord("Auto Approve Members", team.getAutoApproveMembers() ? "Yes" : "No");
+        csvPrinter.printRecord("Team Status", team.getIsActive() ? "Active" : "Inactive");
+        csvPrinter.printRecord("Created Date", formatDateTime(team.getCreatedAt()));
+        csvPrinter.printRecord("Last Updated", formatDateTime(team.getUpdatedAt()));
+    }
+
+    private void addSummaryToCSV(CSVPrinter csvPrinter, List<TeamResponse.TeamMemberInfo> members) throws IOException {
+        csvPrinter.printComment("=== MEMBER SUMMARY ===");
+        
+        // Calculate statistics
+        long totalMembers = members.size();
+        long activeMembers = members.stream().filter(TeamResponse.TeamMemberInfo::getIsActive).count();
+        long pendingMembers = totalMembers - activeMembers;
+        
+        // Role statistics
+        Map<TeamRole, Long> roleCount = members.stream()
+                .collect(Collectors.groupingBy(TeamResponse.TeamMemberInfo::getRole, Collectors.counting()));
+        
+        // Basic statistics
+        csvPrinter.printRecord("Statistic", "Count");
+        csvPrinter.printRecord("Total Members", String.valueOf(totalMembers));
+        csvPrinter.printRecord("Active Members", String.valueOf(activeMembers));
+        csvPrinter.printRecord("Pending Invitations", String.valueOf(pendingMembers));
+        
+        // Role breakdown
+        for (Map.Entry<TeamRole, Long> entry : roleCount.entrySet()) {
+            csvPrinter.printRecord(entry.getKey().getDisplayName() + " Count", String.valueOf(entry.getValue()));
+        }
+    }
+
+    private void addMemberHeaders(CSVPrinter csvPrinter) throws IOException {
+        csvPrinter.printComment("=== TEAM MEMBERS DATA ===");
+        csvPrinter.printRecord(
+                "Member ID",
+                "User ID", 
+                "Username",
+                "First Name",
+                "Last Name",
+                "Full Name",
+                "Email",
+                "Role",
+                "Status",
+                "Is Active",
+                "Joined Date",
+                "Joined Time",
+                "Last Active Date",
+                "Last Active Time",
+                "Invitation Expires",
+                "Notes",
+                "Is Pending Invitation",
+                "Days Since Joined",
+                "Days Since Last Active"
+        );
+    }
+
+    private void addMemberData(CSVPrinter csvPrinter, List<TeamResponse.TeamMemberInfo> members) throws IOException {
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        LocalDateTime now = LocalDateTime.now();
+        
+        for (TeamResponse.TeamMemberInfo member : members) {
+            // Calculate additional metrics
+            String daysSinceJoined = "N/A";
+            String daysSinceLastActive = "N/A";
+            
+            if (member.getJoinedAt() != null) {
+                long days = ChronoUnit.DAYS.between(member.getJoinedAt().toLocalDate(), now.toLocalDate());
+                daysSinceJoined = String.valueOf(days);
+            }
+            
+            if (member.getLastActiveAt() != null) {
+                long days = ChronoUnit.DAYS.between(member.getLastActiveAt().toLocalDate(), now.toLocalDate());
+                daysSinceLastActive = String.valueOf(days);
+            }
+            
+            csvPrinter.printRecord(
+                    // Basic IDs
+                    member.getId() != null ? member.getId().toString() : "",
+                    member.getUserId() != null ? member.getUserId().toString() : "",
+                    
+                    // User information
+                    cleanCSVValue(member.getUsername()),
+                    cleanCSVValue(member.getFirstName()),
+                    cleanCSVValue(member.getLastName()),
+                    cleanCSVValue(member.getFullName()),
+                    cleanCSVValue(member.getEmail()),
+                    
+                    // Role and status
+                    member.getRole() != null ? member.getRole().getDisplayName() : "",
+                    member.getIsActive() ? "Active" : "Pending",
+                    member.getIsActive() ? "TRUE" : "FALSE",
+                    
+                    // Dates and times
+                    member.getJoinedAt() != null ? member.getJoinedAt().format(dateFormatter) : "",
+                    member.getJoinedAt() != null ? member.getJoinedAt().format(timeFormatter) : "",
+                    member.getLastActiveAt() != null ? member.getLastActiveAt().format(dateFormatter) : "",
+                    member.getLastActiveAt() != null ? member.getLastActiveAt().format(timeFormatter) : "",
+                    
+                    // Additional information
+                    member.getInvitationExpiresAt() != null ? member.getInvitationExpiresAt().format(dateTimeFormatter) : "",
+                    cleanCSVValue(member.getNotes()),
+                    member.isPendingInvitation() ? "TRUE" : "FALSE",
+                    
+                    // Calculated metrics
+                    daysSinceJoined,
+                    daysSinceLastActive
+            );
+        }
+    }
+
+    private void addExportMetadata(CSVPrinter csvPrinter, String username) throws IOException {
+        csvPrinter.println();
+        csvPrinter.printComment("=== EXPORT METADATA ===");
+        csvPrinter.printRecord("Field", "Value");
+        csvPrinter.printRecord("Export Date", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+        csvPrinter.printRecord("Export Time", LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
+        csvPrinter.printRecord("Export Timestamp", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        csvPrinter.printRecord("Exported By", cleanCSVValue(username));
+        csvPrinter.printRecord("Export Format", "CSV");
+        csvPrinter.printRecord("Character Encoding", "UTF-8");
+        csvPrinter.printRecord("Application", "Trackify Team Management System");
+        csvPrinter.printRecord("Version", "1.0");
+    }
+
+    private String cleanCSVValue(String value) {
+        if (value == null) {
+            return "";
+        }
+        
+        // Remove problematic characters and normalize whitespace
+        return value.trim()
+                .replaceAll("[\r\n]+", " ") // Replace line breaks with spaces
+                .replaceAll("\\s+", " ")   // Normalize multiple spaces
+                .replaceAll("\"", "\"\""); // Escape quotes by doubling them
+    }
+
+    private String formatDateTime(LocalDateTime dateTime) {
+        if (dateTime == null) {
+            return "";
+        }
+        return dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+    }
+
+    // Alternative method for simple CSV export (if you need a simpler version)
+    public byte[] exportTeamMembersToSimpleCSV(Long teamId, String username) {
+        try {
+            logger.info("Starting simple CSV export for team: {} by user: {}", teamId, username);
+            
+            validateTeamAccess(teamId, username);
+            List<TeamResponse.TeamMemberInfo> members = exportTeamMembers(teamId, username);
+            
+            StringBuilder csv = new StringBuilder();
+            
+            // Add BOM for Excel compatibility
+            csv.append('\ufeff');
+            
+            // Simple header
+            csv.append("Username,Full Name,Email,Role,Status,Joined Date,Last Active\n");
+            
+            // Data rows
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+            
+            for (TeamResponse.TeamMemberInfo member : members) {
+                csv.append(String.format("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
+                        escapeCSV(member.getUsername()),
+                        escapeCSV(member.getFullName()),
+                        escapeCSV(member.getEmail()),
+                        member.getRole() != null ? member.getRole().getDisplayName() : "",
+                        member.getIsActive() ? "Active" : "Pending",
+                        member.getJoinedAt() != null ? member.getJoinedAt().format(formatter) : "",
+                        member.getLastActiveAt() != null ? member.getLastActiveAt().format(formatter) : ""
+                ));
+            }
+            
+            return csv.toString().getBytes(StandardCharsets.UTF_8);
+            
+        } catch (Exception e) {
+            logger.error("Error exporting simple CSV for team: {} by user: {}", teamId, username, e);
+            throw new RuntimeException("Failed to export simple CSV: " + e.getMessage(), e);
+        }
+    }
+
+    private String escapeCSV(String value) {
+        if (value == null) {
+            return "";
+        }
+        // Escape quotes and remove line breaks
+        return value.replaceAll("\"", "\"\"").replaceAll("[\r\n]+", " ");
+    }
     @Override
     @Transactional(readOnly = true)
     public byte[] exportTeamMembersToPDF(Long teamId, String username) {
+        ByteArrayOutputStream outputStream = null;
+        PdfWriter writer = null;
+        PdfDocument pdfDocument = null;
+        Document document = null;
+        
         try {
-            // This would implement PDF generation
-            // For now, returning placeholder
-            String content = "Team Members Export - PDF format not implemented yet";
-            return content.getBytes();
-
+            logger.info("Starting PDF export for team: {} by user: {}", teamId, username);
+            
+            validateTeamAccess(teamId, username);
+            
+            // Get team and members data
+            Team team = getTeamEntityById(teamId);
+            List<TeamResponse.TeamMemberInfo> members = exportTeamMembers(teamId, username);
+            
+            logger.info("Found {} members for team: {}", members.size(), teamId);
+            
+            // Create PDF in memory
+            outputStream = new ByteArrayOutputStream();
+            writer = new PdfWriter(outputStream);
+            pdfDocument = new PdfDocument(writer);
+            document = new Document(pdfDocument, PageSize.A4);
+            document.setMargins(50, 50, 50, 50);
+            
+            // Create fonts
+            PdfFont titleFont = PdfFontFactory.createFont(StandardFonts.HELVETICA_BOLD);
+            PdfFont headerFont = PdfFontFactory.createFont(StandardFonts.HELVETICA_BOLD);
+            PdfFont bodyFont = PdfFontFactory.createFont(StandardFonts.HELVETICA);
+            
+            // Define colors
+            Color primaryColor = new DeviceRgb(51, 122, 183);      // Bootstrap primary blue
+            Color successColor = new DeviceRgb(92, 184, 92);       // Green
+            Color warningColor = new DeviceRgb(240, 173, 78);      // Orange
+            Color headerBgColor = new DeviceRgb(245, 245, 245);    // Light gray
+            Color textColor = new DeviceRgb(51, 51, 51);           // Dark gray
+            
+            // Build PDF content
+            addPDFTitle(document, titleFont, primaryColor);
+            addTeamInformation(document, team, headerFont, bodyFont, primaryColor, textColor);
+            addMembersSummary(document, members, headerFont, bodyFont, primaryColor, textColor);
+            addMembersDetailTable(document, members, headerFont, bodyFont, primaryColor, headerBgColor, textColor, successColor, warningColor);
+            addPDFFooter(document, username, bodyFont, textColor);
+            
+            // Close document properly
+            document.close();
+            pdfDocument.close();
+            writer.close();
+            
+            byte[] pdfBytes = outputStream.toByteArray();
+            outputStream.close();
+            
+            logger.info("PDF generated successfully for team: {}, size: {} bytes", teamId, pdfBytes.length);
+            
+            return pdfBytes;
+            
         } catch (Exception e) {
-            logger.error("Error exporting team members to PDF for team: {} by user: {}", teamId, username, e);
-            throw e;
+            logger.error("Error generating PDF for team: {} by user: {}", teamId, username, e);
+            
+            // Clean up resources
+            cleanupPDFResources(document, pdfDocument, writer, outputStream);
+            
+            throw new RuntimeException("Failed to generate PDF: " + e.getMessage(), e);
+        }
+    }
+
+    private void addPDFTitle(Document document, PdfFont titleFont, Color primaryColor) {
+        // Main title
+        Paragraph title = new Paragraph("TEAM MEMBERS REPORT")
+                .setFont(titleFont)
+                .setFontSize(24)
+                .setFontColor(primaryColor)
+                .setTextAlignment(TextAlignment.CENTER)
+                .setMarginBottom(30)
+                .setBold();
+        
+        document.add(title);
+        
+        // Add a separator line
+        LineSeparator separator = new LineSeparator(new SolidLine(2f));
+        separator.setMarginTop(10);
+        separator.setMarginBottom(20);
+        document.add(separator);
+    }
+
+    private void addTeamInformation(Document document, Team team, PdfFont headerFont, PdfFont bodyFont, 
+                                   Color primaryColor, Color textColor) {
+        
+        // Section header
+        Paragraph sectionHeader = new Paragraph("Team Information")
+                .setFont(headerFont)
+                .setFontSize(18)
+                .setFontColor(primaryColor)
+                .setMarginBottom(15)
+                .setBold();
+        document.add(sectionHeader);
+        
+        // Create info table with 2 columns
+        Table infoTable = new Table(UnitValue.createPercentArray(new float[]{30f, 70f}));
+        infoTable.setWidth(UnitValue.createPercentValue(100));
+        infoTable.setMarginBottom(20);
+        
+        // Add team information rows
+        addInfoTableRow(infoTable, "Team Name:", team.getName(), headerFont, bodyFont, textColor);
+        addInfoTableRow(infoTable, "Description:", 
+                       team.getDescription() != null && !team.getDescription().trim().isEmpty() 
+                       ? team.getDescription() : "No description provided", 
+                       headerFont, bodyFont, textColor);
+        
+        String ownerName = team.getOwner().getFirstName() + " " + team.getOwner().getLastName();
+        String ownerInfo = ownerName + " (" + team.getOwner().getEmail() + ")";
+        addInfoTableRow(infoTable, "Team Owner:", ownerInfo, headerFont, bodyFont, textColor);
+        
+        addInfoTableRow(infoTable, "Currency:", team.getCurrency() != null ? team.getCurrency() : "USD", 
+                       headerFont, bodyFont, textColor);
+        addInfoTableRow(infoTable, "Maximum Members:", String.valueOf(team.getMaxMembers()), 
+                       headerFont, bodyFont, textColor);
+        addInfoTableRow(infoTable, "Auto Approve Members:", team.getAutoApproveMembers() ? "Yes" : "No", 
+                       headerFont, bodyFont, textColor);
+        addInfoTableRow(infoTable, "Team Status:", team.getIsActive() ? "Active" : "Inactive", 
+                       headerFont, bodyFont, textColor);
+        
+        String createdDate = team.getCreatedAt().format(DateTimeFormatter.ofPattern("MMMM dd, yyyy 'at' HH:mm"));
+        addInfoTableRow(infoTable, "Created Date:", createdDate, headerFont, bodyFont, textColor);
+        
+        document.add(infoTable);
+    }
+
+    private void addMembersSummary(Document document, List<TeamResponse.TeamMemberInfo> members, 
+                                  PdfFont headerFont, PdfFont bodyFont, Color primaryColor, Color textColor) {
+        
+        // Section header
+        Paragraph summaryHeader = new Paragraph("Members Summary")
+                .setFont(headerFont)
+                .setFontSize(18)
+                .setFontColor(primaryColor)
+                .setMarginBottom(15)
+                .setBold();
+        document.add(summaryHeader);
+        
+        // Calculate statistics
+        long totalMembers = members.size();
+        long activeMembers = members.stream().filter(TeamResponse.TeamMemberInfo::getIsActive).count();
+        long pendingMembers = totalMembers - activeMembers;
+        
+        // Role statistics
+        Map<TeamRole, Long> roleCount = members.stream()
+                .collect(Collectors.groupingBy(TeamResponse.TeamMemberInfo::getRole, Collectors.counting()));
+        
+        // Create summary table
+        Table summaryTable = new Table(UnitValue.createPercentArray(new float[]{40f, 60f}));
+        summaryTable.setWidth(UnitValue.createPercentValue(100));
+        summaryTable.setMarginBottom(20);
+        
+        // Basic statistics
+        addInfoTableRow(summaryTable, "Total Members:", String.valueOf(totalMembers), 
+                       headerFont, bodyFont, textColor);
+        addInfoTableRow(summaryTable, "Active Members:", String.valueOf(activeMembers), 
+                       headerFont, bodyFont, textColor);
+        addInfoTableRow(summaryTable, "Pending Invitations:", String.valueOf(pendingMembers), 
+                       headerFont, bodyFont, textColor);
+        
+        // Role breakdown
+        if (!roleCount.isEmpty()) {
+            addInfoTableRow(summaryTable, "", "", headerFont, bodyFont, textColor); // Empty row for spacing
+            
+            for (Map.Entry<TeamRole, Long> entry : roleCount.entrySet()) {
+                String roleLabel = entry.getKey().getDisplayName() + "(s):";
+                addInfoTableRow(summaryTable, roleLabel, String.valueOf(entry.getValue()), 
+                               headerFont, bodyFont, textColor);
+            }
+        }
+        
+        document.add(summaryTable);
+    }
+
+    private void addMembersDetailTable(Document document, List<TeamResponse.TeamMemberInfo> members, 
+                                      PdfFont headerFont, PdfFont bodyFont, Color primaryColor, 
+                                      Color headerBgColor, Color textColor, Color successColor, Color warningColor) {
+        
+        // Section header
+        Paragraph membersHeader = new Paragraph("Team Members Details")
+                .setFont(headerFont)
+                .setFontSize(18)
+                .setFontColor(primaryColor)
+                .setMarginBottom(15)
+                .setBold();
+        document.add(membersHeader);
+        
+        // Create members table with 6 columns
+        float[] columnWidths = {2.5f, 3.5f, 4f, 2f, 2f, 3f};
+        Table membersTable = new Table(UnitValue.createPercentArray(columnWidths));
+        membersTable.setWidth(UnitValue.createPercentValue(100));
+        
+        // Table headers
+        String[] headers = {"Username", "Full Name", "Email", "Role", "Status", "Joined Date"};
+        for (String header : headers) {
+            Cell headerCell = new Cell()
+                    .add(new Paragraph(header)
+                            .setFont(headerFont)
+                            .setFontSize(11)
+                            .setBold())
+                    .setBackgroundColor(headerBgColor)
+                    .setTextAlignment(TextAlignment.CENTER)
+                    .setPadding(10)
+                    .setBorder(new SolidBorder(ColorConstants.GRAY, 1));
+            membersTable.addHeaderCell(headerCell);
+        }
+        
+        // Add member data rows
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("MMM dd, yyyy");
+        
+        for (TeamResponse.TeamMemberInfo member : members) {
+            // Username
+            membersTable.addCell(createMemberDataCell(
+                    member.getUsername() != null ? member.getUsername() : "N/A", 
+                    bodyFont, textColor));
+            
+            // Full Name
+            membersTable.addCell(createMemberDataCell(
+                    member.getFullName() != null ? member.getFullName() : "N/A", 
+                    bodyFont, textColor));
+            
+            // Email
+            membersTable.addCell(createMemberDataCell(
+                    member.getEmail() != null ? member.getEmail() : "N/A", 
+                    bodyFont, textColor));
+            
+            // Role with color coding
+            Cell roleCell = createMemberDataCell(
+                    member.getRole() != null ? member.getRole().getDisplayName() : "N/A", 
+                    bodyFont, textColor);
+            
+            // Color code roles
+            if (member.getRole() != null) {
+                switch (member.getRole()) {
+                    case OWNER:
+                        roleCell.setFontColor(new DeviceRgb(220, 53, 69)); // Red
+                        roleCell.setBold();
+                        break;
+                    case ADMIN:
+                        roleCell.setFontColor(new DeviceRgb(255, 193, 7)); // Yellow/Orange
+                        roleCell.setBold();
+                        break;
+                    case MANAGER:
+                        roleCell.setFontColor(new DeviceRgb(13, 110, 253)); // Blue
+                        break;
+                    default:
+                        roleCell.setFontColor(textColor);
+                }
+            }
+            membersTable.addCell(roleCell);
+            
+            // Status with color coding
+            String status = member.getIsActive() ? "Active" : "Pending";
+            Cell statusCell = createMemberDataCell(status, bodyFont, textColor);
+            if (member.getIsActive()) {
+                statusCell.setFontColor(successColor);
+                statusCell.setBold();
+            } else {
+                statusCell.setFontColor(warningColor);
+            }
+            membersTable.addCell(statusCell);
+            
+            // Joined Date
+            String joinedDate = "N/A";
+            if (member.getJoinedAt() != null) {
+                joinedDate = member.getJoinedAt().format(dateFormatter);
+            }
+            membersTable.addCell(createMemberDataCell(joinedDate, bodyFont, textColor));
+        }
+        
+        document.add(membersTable);
+    }
+
+    private void addPDFFooter(Document document, String exportedBy, PdfFont bodyFont, Color textColor) {
+        // Add some space before footer
+        document.add(new Paragraph("\n"));
+        
+        // Export information
+        String currentDateTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("MMMM dd, yyyy 'at' HH:mm:ss"));
+        
+        Paragraph exportInfo = new Paragraph()
+                .add(new Text("Report generated on: ").setFont(bodyFont).setFontSize(10))
+                .add(new Text(currentDateTime).setFont(bodyFont).setFontSize(10).setBold())
+                .add(new Text("\nExported by: ").setFont(bodyFont).setFontSize(10))
+                .add(new Text(exportedBy).setFont(bodyFont).setFontSize(10).setBold())
+                .setFontColor(textColor)
+                .setTextAlignment(TextAlignment.RIGHT)
+                .setMarginTop(30);
+        
+        document.add(exportInfo);
+        
+        // Add disclaimer
+        Paragraph disclaimer = new Paragraph("This report contains confidential team information. Please handle with appropriate care.")
+                .setFont(bodyFont)
+                .setFontSize(8)
+                .setFontColor(new DeviceRgb(108, 117, 125)) // Bootstrap text-muted color
+                .setTextAlignment(TextAlignment.CENTER)
+                .setMarginTop(20)
+                .setItalic();
+        
+        document.add(disclaimer);
+    }
+
+    // Helper methods
+    private void addInfoTableRow(Table table, String label, String value, PdfFont headerFont, 
+                                PdfFont bodyFont, Color textColor) {
+        // Label cell
+        Cell labelCell = new Cell()
+                .add(new Paragraph(label).setFont(headerFont).setFontSize(11).setBold())
+                .setPadding(8)
+                .setBorder(Border.NO_BORDER)
+                .setTextAlignment(TextAlignment.LEFT);
+        
+        // Value cell
+        Cell valueCell = new Cell()
+                .add(new Paragraph(value != null ? value : "N/A").setFont(bodyFont).setFontSize(11))
+                .setPadding(8)
+                .setBorder(Border.NO_BORDER)
+                .setTextAlignment(TextAlignment.LEFT)
+                .setFontColor(textColor);
+        
+        table.addCell(labelCell);
+        table.addCell(valueCell);
+    }
+
+    private Cell createMemberDataCell(String content, PdfFont font, Color textColor) {
+        return new Cell()
+                .add(new Paragraph(content != null ? content : "N/A")
+                        .setFont(font)
+                        .setFontSize(10))
+                .setPadding(8)
+                .setTextAlignment(TextAlignment.LEFT)
+                .setFontColor(textColor)
+                .setBorder(new SolidBorder(ColorConstants.LIGHT_GRAY, 0.5f));
+    }
+
+    private void cleanupPDFResources(Document document, PdfDocument pdfDocument, 
+                                    PdfWriter writer, ByteArrayOutputStream outputStream) {
+        try {
+            if (document != null) document.close();
+            if (pdfDocument != null) pdfDocument.close();
+            if (writer != null) writer.close();
+            if (outputStream != null) outputStream.close();
+        } catch (Exception cleanup) {
+            logger.warn("Error during PDF resource cleanup", cleanup);
         }
     }
 
