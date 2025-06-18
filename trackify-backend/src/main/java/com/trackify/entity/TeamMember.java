@@ -16,9 +16,7 @@ import java.time.LocalDateTime;
     @UniqueConstraint(columnNames = {"team_id", "user_id"})
 })
 @EntityListeners(AuditingEntityListener.class)
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
+
 public class TeamMember {
 
     @Id
@@ -279,6 +277,29 @@ public class TeamMember {
 	public void setUpdatedAt(LocalDateTime updatedAt) {
 		this.updatedAt = updatedAt;
 	}
+
+	public TeamMember() {
+	
+	}
+
+	public TeamMember(Long id, Team team, User user, TeamRole role, Boolean isActive, Long invitedBy,
+			LocalDateTime invitationAcceptedAt, LocalDateTime invitationExpiresAt, LocalDateTime lastActiveAt,
+			String notes, LocalDateTime joinedAt, LocalDateTime updatedAt) {
+		super();
+		this.id = id;
+		this.team = team;
+		this.user = user;
+		this.role = role;
+		this.isActive = isActive;
+		this.invitedBy = invitedBy;
+		this.invitationAcceptedAt = invitationAcceptedAt;
+		this.invitationExpiresAt = invitationExpiresAt;
+		this.lastActiveAt = lastActiveAt;
+		this.notes = notes;
+		this.joinedAt = joinedAt;
+		this.updatedAt = updatedAt;
+	}
     
+	
     
 }
