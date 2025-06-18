@@ -17,7 +17,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -810,19 +812,41 @@ public class TeamController {
             @Parameter(description = "Team ID") @PathVariable Long teamId,
             Authentication authentication) {
         try {
-            byte[] pdfData = teamService.exportTeamMembersToPDF(teamId, authentication.getName());
+            String username = authentication.getName();
+            byte[] pdfData = teamService.exportTeamMembersToPDF(teamId, username);
+            
+            // Validate PDF data
+            if (pdfData == null || pdfData.length == 0) {
+                logger.error("Generated PDF data is empty for team: {} by user: {}", teamId, username);
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body("Failed to generate PDF".getBytes());
+            }
             
             HttpHeaders headers = new HttpHeaders();
-            headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=team_members_" + teamId + ".pdf");
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            headers.setContentLength(pdfData.length);
+            headers.setContentDisposition(ContentDisposition.builder("attachment")
+                    .filename("team_members_" + teamId + ".pdf")
+                    .build());
+            
+            // Add cache control headers
+            headers.setCacheControl("no-cache, no-store, must-revalidate");
+            headers.setPragma("no-cache");
+            headers.setExpires(0);
+            
+            logger.info("Successfully exported PDF for team: {} by user: {}, size: {} bytes", 
+                       teamId, username, pdfData.length);
             
             return ResponseEntity.ok()
                     .headers(headers)
-                    .contentType(MediaType.APPLICATION_PDF)
                     .body(pdfData);
                     
         } catch (Exception e) {
-            logger.error("Error exporting team members to PDF for team: {} by user: {}", teamId, authentication.getName(), e);
-            return ResponseEntity.status(500).build();
+            logger.error("Error exporting team members to PDF for team: {} by user: {}", 
+                        teamId, authentication.getName(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .contentType(MediaType.TEXT_PLAIN)
+                    .body(("Error generating PDF: " + e.getMessage()).getBytes());
         }
     }
 
