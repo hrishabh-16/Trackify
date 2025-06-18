@@ -53,7 +53,7 @@ public class TeamServiceImpl implements TeamService {
         try {
             logger.info("Creating team: {} by user: {}", teamRequest.getName(), username);
 
-            User owner = userRepository.findByUsername(username)
+            User owner = userRepository.findByUsernameOrEmail(username)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
 
             // Check if user already has a team with the same name
@@ -141,7 +141,7 @@ public class TeamServiceImpl implements TeamService {
     @Transactional(readOnly = true)
     public List<TeamResponse> getUserTeams(String username) {
         try {
-            User user = userRepository.findByUsername(username)
+            User user = userRepository.findByUsernameOrEmail(username)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
 
             List<Team> teams = teamRepository.findTeamsByUserId(user.getId());
@@ -160,7 +160,7 @@ public class TeamServiceImpl implements TeamService {
     @Transactional(readOnly = true)
     public Page<TeamResponse> getUserTeams(String username, Pageable pageable) {
         try {
-            User user = userRepository.findByUsername(username)
+            User user = userRepository.findByUsernameOrEmail(username)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
 
             Page<Team> teams = teamRepository.findTeamsByUserId(user.getId(), pageable);
@@ -178,7 +178,7 @@ public class TeamServiceImpl implements TeamService {
         try {
             logger.info("Deleting team: {} by user: {}", teamId, username);
 
-            User user = userRepository.findByUsername(username)
+            User user = userRepository.findByUsernameOrEmail(username)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
 
             Team team = getTeamEntityById(teamId);
@@ -270,7 +270,7 @@ public class TeamServiceImpl implements TeamService {
             validateMemberManagementPermission(teamId, username);
 
             Team team = getTeamEntityById(teamId);
-            User inviter = userRepository.findByUsername(username)
+            User inviter = userRepository.findByUsernameOrEmail(username)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
 
             // Check if team is at max capacity
@@ -347,7 +347,7 @@ public class TeamServiceImpl implements TeamService {
             Team team = teamRepository.findByInviteCodeAndIsActiveTrue(request.getInviteCode())
                     .orElseThrow(() -> new ResourceNotFoundException("Invalid or expired invite code"));
 
-            User user = userRepository.findByUsername(username)
+            User user = userRepository.findByUsernameOrEmail(username)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
 
             // Check if user is already a member
@@ -399,7 +399,7 @@ public class TeamServiceImpl implements TeamService {
         try {
             logger.info("User: {} accepting invitation with code: {}", username, inviteCode);
 
-            User user = userRepository.findByUsername(username)
+            User user = userRepository.findByUsernameOrEmail(username)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
 
             // Find pending invitation
@@ -492,7 +492,7 @@ public class TeamServiceImpl implements TeamService {
         try {
             logger.info("User: {} leaving team: {}", username, teamId);
 
-            User user = userRepository.findByUsername(username)
+            User user = userRepository.findByUsernameOrEmail(username)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
 
             Team team = getTeamEntityById(teamId);
@@ -605,7 +605,7 @@ public class TeamServiceImpl implements TeamService {
             logger.info("Transferring ownership of team: {} to user: {} by user: {}", 
                     teamId, request.getNewOwnerId(), username);
 
-            User currentOwner = userRepository.findByUsername(username)
+            User currentOwner = userRepository.findByUsernameOrEmail(username)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
 
             Team team = getTeamEntityById(teamId);
@@ -699,7 +699,7 @@ public class TeamServiceImpl implements TeamService {
     @Transactional(readOnly = true)
     public List<TeamResponse> getTeamsByOwner(String ownerUsername, String requestingUsername) {
         try {
-            User owner = userRepository.findByUsername(ownerUsername)
+            User owner = userRepository.findByUsernameOrEmail(ownerUsername)
                     .orElseThrow(() -> new ResourceNotFoundException("Owner not found: " + ownerUsername));
 
             List<Team> teams = teamRepository.findByOwnerIdAndIsActiveTrue(owner.getId());
@@ -841,7 +841,7 @@ public class TeamServiceImpl implements TeamService {
     @Transactional(readOnly = true)
     public List<TeamResponse.InvitationResponse> getUserPendingInvitations(String username) {
         try {
-            User user = userRepository.findByUsername(username)
+            User user = userRepository.findByUsernameOrEmail(username)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
 
             List<TeamMember> pendingInvitations = teamMemberRepository
@@ -1047,7 +1047,7 @@ public class TeamServiceImpl implements TeamService {
     @Transactional(readOnly = true)
     public boolean isUserMemberOfTeam(Long teamId, String username) {
         try {
-            User user = userRepository.findByUsername(username)
+            User user = userRepository.findByUsernameOrEmail(username)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
             
             return teamMemberRepository.existsByTeamIdAndUserIdAndIsActiveTrue(teamId, user.getId());
@@ -1060,7 +1060,7 @@ public class TeamServiceImpl implements TeamService {
     @Transactional(readOnly = true)
     public boolean isUserOwnerOfTeam(Long teamId, String username) {
         try {
-            User user = userRepository.findByUsername(username)
+            User user = userRepository.findByUsernameOrEmail(username)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
             
             return teamRepository.isUserOwnerOfTeam(teamId, user.getId());
@@ -1165,7 +1165,7 @@ public class TeamServiceImpl implements TeamService {
     @Transactional(readOnly = true)
     public List<TeamResponse.TeamSummary> getUserTeamSummaries(String username) {
         try {
-            User user = userRepository.findByUsername(username)
+            User user = userRepository.findByUsernameOrEmail(username)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
 
             List<TeamMember> memberships = teamMemberRepository.findActiveMembershipsByUserId(user.getId());
@@ -1396,7 +1396,7 @@ public class TeamServiceImpl implements TeamService {
     @Override
     @Transactional(readOnly = true)
     public TeamMember getTeamMemberEntity(Long teamId, String username) {
-        User user = userRepository.findByUsername(username)
+        User user = userRepository.findByUsernameOrEmail(username)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
 
         return teamMemberRepository.findByTeamIdAndUserId(teamId, user.getId()).orElse(null);
