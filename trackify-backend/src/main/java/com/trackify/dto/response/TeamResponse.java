@@ -244,43 +244,42 @@ public class TeamResponse {
         
         
         public TeamMemberInfo(Long id, Long userId, String username, String firstName,
-        		String lastName, String fullName, String email, TeamRole role,
-        		Boolean isActive, LocalDateTime joinedAt, LocalDateTime lastActiveAt,
-        		LocalDateTime invitationExpiresAt, String notes, Boolean isPending) {
-        	this.id = id;
-        	this.userId = userId;
-        	this.username = username;
-        	this.firstName = firstName;
-        	this.lastName = lastName;
-        	this.fullName = fullName;
-        	this.email = email;
-        	this.role = role;
-        	this.isActive = isActive;
-        	this.joinedAt = joinedAt;
-        	this.lastActiveAt = lastActiveAt;
-        	this.invitationExpiresAt = invitationExpiresAt;
-        	this.notes = notes;
-        	this.isPending = isPending;
-        }
-
-
-        // Constructor for active member
-        public TeamMemberInfo(Long id, Long userId, String username, String firstName, 
-                             String lastName, String email, TeamRole role, Boolean isActive, 
-                             LocalDateTime joinedAt) {
+                String lastName, String fullName, String email, TeamRole role,
+                Boolean isActive, LocalDateTime joinedAt, LocalDateTime lastActiveAt,
+                LocalDateTime invitationExpiresAt, String notes, Boolean isPending) {
             this.id = id;
             this.userId = userId;
             this.username = username;
             this.firstName = firstName;
             this.lastName = lastName;
-            this.fullName = firstName + " " + lastName;
+            this.fullName = fullName;
             this.email = email;
             this.role = role;
             this.isActive = isActive;
             this.joinedAt = joinedAt;
-            this.isPending = !isActive;
+            this.lastActiveAt = lastActiveAt;
+            this.invitationExpiresAt = invitationExpiresAt;
+            this.notes = notes;
+            this.isPending = isPending;
         }
 
+
+        // Constructor for active member
+        public TeamMemberInfo(Long id, Long userId, String username, String firstName, 
+        		String lastName, String email, TeamRole role, Boolean isActive, 
+        		LocalDateTime joinedAt) {
+        	this.id = id;
+        	this.userId = userId;
+        	this.username = username;
+        	this.firstName = firstName;
+        	this.lastName = lastName;
+        	this.fullName = firstName + " " + lastName;
+        	this.email = email;
+        	this.role = role;
+        	this.isActive = isActive;
+        	this.joinedAt = joinedAt;
+        	this.isPending = !isActive; 
+        }
 		public Long getId() {
 			return id;
 		}
@@ -408,6 +407,22 @@ public class TeamResponse {
 		public void setIsPending(Boolean isPending) {
 			this.isPending = isPending;
 		}
+
+	    public Boolean isPendingInvitation() {
+	        return this.isPending != null ? this.isPending : !Boolean.TRUE.equals(this.isActive);
+	    }
+	    
+	    public Boolean isPendingInvitationAdvanced() {
+	        if (Boolean.TRUE.equals(this.isActive)) {
+	            return false; // Already active, not pending
+	        }
+	        
+	        if (this.invitationExpiresAt != null) {
+	            return LocalDateTime.now().isBefore(this.invitationExpiresAt);
+	        }
+	        
+	        return Boolean.TRUE.equals(this.isPending);
+	    }
         
         
     }
