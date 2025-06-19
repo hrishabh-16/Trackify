@@ -602,8 +602,16 @@ public class TeamServiceImpl implements TeamService {
             TeamRole oldRole = member.getRole();
             member.setRole(request.getRole());
             member.setNotes(request.getNotes());
-            member.setIsActive(request.getIsActive());
-
+         // Handle the active status and invitation logic
+            if (request.getIsActive() != null) {
+                member.setIsActive(request.getIsActive());
+                // Clear expiration date when activating, set one when deactivating
+                if (request.getIsActive()) {
+                    member.setInvitationExpiresAt(null); // This is the critical fix
+                } else {
+                    member.setInvitationExpiresAt(LocalDateTime.now().plusDays(3)); //  3-day expiration
+                }
+            }
             member = teamMemberRepository.save(member);
 
             // Notify updated user
