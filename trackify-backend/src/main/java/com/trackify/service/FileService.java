@@ -16,6 +16,7 @@ public interface FileService {
     // File download operations
     byte[] downloadReceipt(Long receiptId, Long userId) throws IOException;
     byte[] downloadReceiptByFilename(String filename, Long userId) throws IOException;
+    byte[] downloadReceiptByOriginalFilename(String originalFilename, Long userId) throws IOException;
     
     // File management
     void deleteReceipt(Long receiptId, Long userId) throws IOException;
