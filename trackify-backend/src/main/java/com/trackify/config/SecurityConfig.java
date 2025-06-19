@@ -120,7 +120,7 @@ public class SecurityConfig {
                 .successHandler(oAuth2AuthenticationSuccessHandler)
             )
             
-            // Configure authorization with specific rules
+         // Configure authorization with specific rules
             .authorizeHttpRequests(auth -> auth
                 // Public endpoints - NO authentication required
                 .requestMatchers(
@@ -141,12 +141,24 @@ public class SecurityConfig {
                     // Actuator endpoints
                     "/actuator/**",
                     
-                    // Swagger/OpenAPI endpoints
+                    // Swagger/OpenAPI endpoints - CORRECTED PATHS for /api context
+                    "/api/swagger-ui/**",
+                    "/api/swagger-ui.html",
+                    "/api/swagger-ui/index.html",
+                    "/api/v3/api-docs/**",
+                    "/api/v3/api-docs.yaml",
+                    "/api/v3/api-docs",
+                    "/api/api-docs/**",
+                    "/api/swagger-resources/**",
+                    "/api/webjars/**",
+                    
+                    // Also allow direct access (for redirects)
                     "/swagger-ui/**",
                     "/swagger-ui.html",
                     "/swagger-ui/index.html",
                     "/v3/api-docs/**",
                     "/v3/api-docs.yaml",
+                    "/v3/api-docs",
                     "/api-docs/**",
                     "/swagger-resources/**",
                     "/webjars/**",
