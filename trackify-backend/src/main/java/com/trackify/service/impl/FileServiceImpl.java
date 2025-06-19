@@ -130,17 +130,17 @@ public class FileServiceImpl implements FileService {
     public byte[] downloadReceipt(Long receiptId, Long userId) throws IOException {
         Receipt receipt = receiptRepository.findById(receiptId)
                 .orElseThrow(() -> new ResourceNotFoundException("Receipt not found with id: " + receiptId));
-        
+
         // Validate access
         if (!receipt.getUploadedBy().equals(userId)) {
             throw new ForbiddenException("You don't have access to this receipt");
         }
-        
+
         Path filePath = Paths.get(receipt.getFilePath());
         if (!Files.exists(filePath)) {
             throw new ResourceNotFoundException("Receipt file not found on disk");
         }
-        
+
         return Files.readAllBytes(filePath);
     }
     
@@ -153,6 +153,15 @@ public class FileServiceImpl implements FileService {
         return downloadReceipt(receipt.getId(), userId);
     }
     
+    @Override
+    @Transactional(readOnly = true)
+    public byte[] downloadReceiptByOriginalFilename(String originalFilename, Long userId) throws IOException {
+        Receipt receipt = receiptRepository.findByOriginalFilename(originalFilename)
+                .orElseThrow(() -> new ResourceNotFoundException("Receipt not found with filename: " + originalFilename));
+
+        return downloadReceipt(receipt.getId(), userId);
+    }
+
     @Override
     public void deleteReceipt(Long receiptId, Long userId) throws IOException {
         logger.info("Deleting receipt {} by user: {}", receiptId, userId);
