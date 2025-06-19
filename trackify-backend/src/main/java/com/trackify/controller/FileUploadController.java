@@ -2,6 +2,8 @@ package com.trackify.controller;
 
 import com.trackify.dto.response.ApiResponse;
 import com.trackify.dto.response.ReceiptResponse;
+import com.trackify.exception.ForbiddenException;
+import com.trackify.exception.ResourceNotFoundException;
 import com.trackify.security.UserPrincipal;
 import com.trackify.service.FileService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -125,24 +127,31 @@ public class FileUploadController {
     }
     
     @GetMapping("/receipts/download/filename/{filename}")
-    @Operation(summary = "Download receipt by filename", description = "Download a receipt file by filename")
+    @Operation(summary = "Download receipt by original filename", description = "Download a receipt file by its original filename")
     public ResponseEntity<Resource> downloadReceiptByFilename(
-            @Parameter(description = "Filename") @PathVariable String filename,
+            @Parameter(description = "Original filename") @PathVariable String filename,
             @AuthenticationPrincipal UserPrincipal currentUser) {
-        
+
         try {
-            byte[] fileData = fileService.downloadReceiptByFilename(filename, currentUser.getId());
-            
+            byte[] fileData = fileService.downloadReceiptByOriginalFilename(filename, currentUser.getId());
+
             ByteArrayResource resource = new ByteArrayResource(fileData);
-            
+
             HttpHeaders headers = new HttpHeaders();
             headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"");
             
+            // Add content type header
+            headers.add(HttpHeaders.CONTENT_TYPE, "application/octet-stream");
+
             return ResponseEntity.ok()
-                .headers(headers)
-                .contentLength(fileData.length)
-                .body(resource);
-                
+                    .headers(headers)
+                    .contentLength(fileData.length)
+                    .body(resource);
+
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        } catch (ForbiddenException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         } catch (IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
