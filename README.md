@@ -143,8 +143,8 @@ java -jar target/trackify-backend-1.0.0.jar
 
 ### 5. Access the Application
 
-- **API Base URL**: http://localhost:6000/api
-- **Swagger UI**: http://localhost:6000/api/swagger-ui.html
+- **API Base URL**: http://localhost:8090/api
+- **Swagger UI**: http://localhost:8090/api/swagger-ui.html
 
 ## 🐳 Docker Setup
 
@@ -168,7 +168,7 @@ docker-compose down
 docker build -t trackify-backend .
 
 # Run with environment variables
-docker run -p 6000:6000 \
+docker run -p 8090:8090 \
   -e SPRING_DATASOURCE_URL=jdbc:mysql://host.docker.internal:3306/trackify \
   -e SPRING_DATASOURCE_USERNAME=root \
   -e SPRING_DATASOURCE_PASSWORD=password \
@@ -225,7 +225,7 @@ GET    /api/reports/category            # Category-wise reports
 
 ```javascript
 // Connect to WebSocket
-const socket = new WebSocket('ws://localhost:6000/api/ws');
+const socket = new WebSocket('ws://localhost:8090/api/ws');
 
 // Listen for real-time updates
 socket.onmessage = (event) => {
