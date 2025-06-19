@@ -38,10 +38,10 @@ public class TrackifyBackendApplication {
     public void logStartup() {
         logger.info("=========================================================");
         logger.info("Trackify Backend Application started successfully!");
-        logger.info("Server running on: http://localhost:6000");
-        logger.info("API Base URL: http://localhost:6000/api");
-        logger.info("Swagger UI: http://localhost:6000/api/swagger-ui.html");
-        logger.info("API Docs: http://localhost:6000/api/api-docs");
+        logger.info("Server running on: http://localhost:8090");
+        logger.info("API Base URL: http://localhost:8090/api");
+        logger.info("Swagger UI: http://localhost:8090/api/swagger-ui.html");
+        logger.info("API Docs: http://localhost:8090/api/api-docs");
         logger.info("=========================================================");
     }
 }
