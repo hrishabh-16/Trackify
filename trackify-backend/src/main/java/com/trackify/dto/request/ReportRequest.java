@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 @Data
 @NoArgsConstructor
@@ -15,7 +16,7 @@ import java.util.List;
 public class ReportRequest {
 
 	@NotBlank(message = "Report type is required")
-	@Pattern(regexp = "^(EXPENSE|BUDGET|APPROVAL|CATEGORY|TEAM|USER|FINANCIAL)$", message = "Invalid report type")
+	@Pattern(regexp = "^(EXPENSE|BUDGET|APPROVAL|CATEGORY|TEAM|USER|FINANCIAL|CUSTOM)$", message = "Invalid report type")
 	private String reportType;
 
 	@NotNull(message = "Start date is required")
@@ -35,6 +36,7 @@ public class ReportRequest {
 	private List<String> expenseStatuses;
 	private BigDecimal minAmount;
 	private BigDecimal maxAmount;
+	private Map<String, Object> customParameters;
 	private String currency;
 	private Boolean includeCharts = true;
 	private Boolean includeDetails = true;
@@ -59,6 +61,10 @@ public class ReportRequest {
 		this.sortDirection = "DESC";
 		this.emailReport = false;
 		this.scheduleReport = false;
+	}
+
+	public ReportRequest() {
+		
 	}
 
 	@Data
@@ -508,13 +514,17 @@ public class ReportRequest {
 	public static class ScheduledReportRequest {
 		@NotBlank(message = "Report name is required")
 		private String reportName;
+
 		@NotNull(message = "Report configuration is required")
 		private ReportRequest reportConfig;
+
 		@NotBlank(message = "Schedule frequency is required")
 		@Pattern(regexp = "^(DAILY|WEEKLY|MONTHLY|QUARTERLY)$", message = "Invalid frequency")
 		private String frequency;
+
 		@NotEmpty(message = "Email recipients are required")
 		private List<String> emailRecipients;
+
 		private Boolean isActive = true;
 		private String description;
 
@@ -527,7 +537,11 @@ public class ReportRequest {
 			this.isActive = true;
 		}
 
-		// Getters and setters
+		public ScheduledReportRequest() {
+			
+		}
+
+		// All getters and setters
 		public String getReportName() {
 			return reportName;
 		}
@@ -575,6 +589,153 @@ public class ReportRequest {
 		public void setDescription(String description) {
 			this.description = description;
 		}
+	}
+
+	// NEW: Custom Report Request for advanced analysis
+	@Data
+	@NoArgsConstructor
+	@AllArgsConstructor
+	public static class CustomReportRequest {
+		@NotNull(message = "Start date is required")
+		private LocalDate startDate;
+		
+		@NotNull(message = "End date is required")
+		private LocalDate endDate;
+		
+		@Pattern(regexp = "^(PDF|CSV|XLSX|JSON)$", message = "Invalid format")
+		private String format = "PDF";
+		
+		private String reportName;
+		private String description;
+		
+		// Analysis type: TREND, COMPARISON, VARIANCE, SUMMARY, FORECAST
+		@Pattern(regexp = "^(TREND|COMPARISON|VARIANCE|SUMMARY|FORECAST|CUSTOM)$", message = "Invalid analysis type")
+		private String analysisType = "SUMMARY";
+		
+		// Group by options
+		@Pattern(regexp = "^(CATEGORY|USER|TEAM|DATE|MONTH|QUARTER|YEAR|STATUS|AMOUNT)$", message = "Invalid group by option")
+		private String groupBy = "CATEGORY";
+		
+		// Time period for comparison (for COMPARISON analysis)
+		private String comparisonPeriod; // PREVIOUS_MONTH, PREVIOUS_QUARTER, PREVIOUS_YEAR, CUSTOM
+		private LocalDate comparisonStartDate;
+		private LocalDate comparisonEndDate;
+		
+		// Filters
+		private List<Long> categoryIds;
+		private List<Long> teamIds;
+		private List<Long> userIds;
+		private List<String> expenseStatuses;
+		private BigDecimal minAmount;
+		private BigDecimal maxAmount;
+		
+		// Analysis options
+		private Boolean includeProjections = false;
+		private Boolean includeVarianceAnalysis = false;
+		private Boolean includeTrendAnalysis = false;
+		private Boolean includeCharts = true;
+		private Boolean includeDetails = true;
+		private Boolean includeSummary = true;
+		
+		// Custom parameters for flexible analysis
+		private Map<String, Object> customParameters;
+		
+		// Sorting and pagination
+		private String sortBy = "amount";
+		private String sortDirection = "DESC";
+		private Integer limitResults;
+		
+		public CustomReportRequest(LocalDate startDate, LocalDate endDate, String format, String analysisType) {
+			this.startDate = startDate;
+			this.endDate = endDate;
+			this.format = format;
+			this.analysisType = analysisType;
+			this.groupBy = "CATEGORY";
+			this.includeCharts = true;
+			this.includeDetails = true;
+			this.includeSummary = true;
+			this.sortBy = "amount";
+			this.sortDirection = "DESC";
+		}
+	}
+
+	// NEW: Financial Analysis Request
+	@Data
+	@NoArgsConstructor
+	@AllArgsConstructor
+	public static class FinancialAnalysisRequest {
+		@NotNull(message = "Start date is required")
+		private LocalDate startDate;
+		
+		@NotNull(message = "End date is required")
+		private LocalDate endDate;
+		
+		@Pattern(regexp = "^(PDF|CSV|XLSX|JSON)$", message = "Invalid format")
+		private String format = "PDF";
+		
+		// Financial analysis types
+		private Boolean includeCashFlow = true;
+		private Boolean includeProfitLoss = false;
+		private Boolean includeBudgetVariance = true;
+		private Boolean includeROIAnalysis = false;
+		private Boolean includeCostAnalysis = true;
+		
+		// Breakdown options
+		private String breakdownBy = "CATEGORY"; // CATEGORY, TEAM, USER, PROJECT
+		private List<Long> categoryIds;
+		private List<Long> teamIds;
+		private String currency = "USD";
+		
+		// Comparison options
+		private Boolean includeYearOverYear = false;
+		private Boolean includeMonthOverMonth = true;
+		private Boolean includeProjections = false;
+		
+		public FinancialAnalysisRequest(LocalDate startDate, LocalDate endDate, String format) {
+			this.startDate = startDate;
+			this.endDate = endDate;
+			this.format = format;
+			this.includeCashFlow = true;
+			this.includeBudgetVariance = true;
+			this.includeCostAnalysis = true;
+			this.breakdownBy = "CATEGORY";
+			this.currency = "USD";
+			this.includeMonthOverMonth = true;
+		}
+	}
+
+	// Add method to get custom parameters with type safety
+	public Map<String, Object> getCustomParameters() {
+		return customParameters;
+	}
+
+	public void setCustomParameters(Map<String, Object> customParameters) {
+		this.customParameters = customParameters;
+	}
+
+	// Helper method to get custom parameter by key
+	public Object getCustomParameter(String key) {
+		return customParameters != null ? customParameters.get(key) : null;
+	}
+
+	// Helper method to get custom parameter with default value
+	public Object getCustomParameter(String key, Object defaultValue) {
+		if (customParameters != null && customParameters.containsKey(key)) {
+			return customParameters.get(key);
+		}
+		return defaultValue;
+	}
+
+	// Helper method to get string custom parameter
+	public String getCustomStringParameter(String key, String defaultValue) {
+		Object value = getCustomParameter(key);
+		return value instanceof String ? (String) value : defaultValue;
+	}
+
+	// Helper method to get boolean custom parameter
+	public Boolean getCustomBooleanParameter(String key, Boolean defaultValue) {
+		Object value = getCustomParameter(key);
+		return value instanceof Boolean ? (Boolean) value : defaultValue;
 	}
 
 	// All getters and setters for main class
