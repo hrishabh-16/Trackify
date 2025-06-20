@@ -55,7 +55,7 @@ public class DashboardServiceImpl implements DashboardService {
         try {
             logger.info("Generating dashboard data for user: {}", username);
             
-            User user = userRepository.findByUsername(username)
+            User user = userRepository.findByUsernameOrEmail(username)
                     .orElseThrow(() -> new RuntimeException("User not found: " + username));
             
             LocalDate now = LocalDate.now();
@@ -110,7 +110,7 @@ public class DashboardServiceImpl implements DashboardService {
         try {
             logger.info("Generating team dashboard data for team: {} by user: {}", teamId, username);
             
-            User user = userRepository.findByUsername(username)
+            User user = userRepository.findByUsernameOrEmail(username)
                     .orElseThrow(() -> new RuntimeException("User not found: " + username));
             
             // Verify user is part of the team
@@ -141,7 +141,7 @@ public class DashboardServiceImpl implements DashboardService {
     @Override
     public DashboardResponse.ExpenseSummary getExpenseSummary(String username, LocalDate startDate, LocalDate endDate) {
         try {
-            User user = userRepository.findByUsername(username)
+            User user = userRepository.findByUsernameOrEmail(username)
                     .orElseThrow(() -> new RuntimeException("User not found: " + username));
             
             LocalDateTime startDateTime = startDate.atStartOfDay();
@@ -212,7 +212,7 @@ public class DashboardServiceImpl implements DashboardService {
     @Override
     public DashboardResponse.BudgetSummary getBudgetSummary(String username, LocalDate startDate, LocalDate endDate) {
         try {
-            User user = userRepository.findByUsername(username)
+            User user = userRepository.findByUsernameOrEmail(username)
                     .orElseThrow(() -> new RuntimeException("User not found: " + username));
             
             List<Budget> budgets = budgetRepository.findByUserIdAndPeriodOverlap(
@@ -273,7 +273,7 @@ public class DashboardServiceImpl implements DashboardService {
     @Override
     public DashboardResponse.CategorySummary getCategorySummary(String username, LocalDate startDate, LocalDate endDate) {
         try {
-            User user = userRepository.findByUsername(username)
+            User user = userRepository.findByUsernameOrEmail(username)
                     .orElseThrow(() -> new RuntimeException("User not found: " + username));
             
             LocalDateTime startDateTime = startDate.atStartOfDay();
@@ -314,7 +314,7 @@ public class DashboardServiceImpl implements DashboardService {
     @Override
     public List<DashboardResponse.MonthlyExpense> getMonthlyExpenseData(String username, int months) {
         try {
-            User user = userRepository.findByUsername(username)
+            User user = userRepository.findByUsernameOrEmail(username)
                     .orElseThrow(() -> new RuntimeException("User not found: " + username));
             
             List<DashboardResponse.MonthlyExpense> monthlyData = new ArrayList<>();
@@ -360,7 +360,7 @@ public class DashboardServiceImpl implements DashboardService {
     @Override
     public List<DashboardResponse.CategoryExpense> getCategoryExpenseData(String username, LocalDate startDate, LocalDate endDate) {
         try {
-            User user = userRepository.findByUsername(username)
+            User user = userRepository.findByUsernameOrEmail(username)
                     .orElseThrow(() -> new RuntimeException("User not found: " + username));
             
             LocalDateTime startDateTime = startDate.atStartOfDay();
@@ -403,7 +403,7 @@ public class DashboardServiceImpl implements DashboardService {
     @Override
     public List<DashboardResponse.DailyExpense> getDailyExpenseData(String username, LocalDate startDate, LocalDate endDate) {
         try {
-            User user = userRepository.findByUsername(username)
+            User user = userRepository.findByUsernameOrEmail(username)
                     .orElseThrow(() -> new RuntimeException("User not found: " + username));
             
             List<DashboardResponse.DailyExpense> dailyData = new ArrayList<>();
@@ -504,7 +504,7 @@ public class DashboardServiceImpl implements DashboardService {
     @Override
     public List<DashboardResponse.RecentExpense> getRecentExpenses(String username, int limit) {
         try {
-            User user = userRepository.findByUsername(username)
+            User user = userRepository.findByUsernameOrEmail(username)
                     .orElseThrow(() -> new RuntimeException("User not found: " + username));
             
             List<Expense> recentExpenses = expenseRepository.findTop10ByUserIdOrderByCreatedAtDesc(user.getId());
@@ -532,7 +532,7 @@ public class DashboardServiceImpl implements DashboardService {
     @Override
     public List<DashboardResponse.BudgetStatus> getBudgetStatusList(String username) {
         try {
-            User user = userRepository.findByUsername(username)
+            User user = userRepository.findByUsernameOrEmail(username)
                     .orElseThrow(() -> new RuntimeException("User not found: " + username));
             
             LocalDate now = LocalDate.now();
