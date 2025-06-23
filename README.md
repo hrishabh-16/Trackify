@@ -59,13 +59,11 @@
 - **Framework**: Spring Boot 3.5.0
 - **Language**: Java 21
 - **Database**: MySQL 8.0
-- **Caching**: Redis
-- **Security**: Spring Security + JWT
+- **Security**: Spring Security + JWT + Oauth2.0
 - **Real-time**: WebSocket
 - **Documentation**: OpenAPI/Swagger
 - **AI**: Spring AI (OpenAI, Anthropic)
-- **File Processing**: Apache POI, iText PDF
-- **Testing**: JUnit 5, Testcontainers
+- **File Processing**: iText PDF
 
 ### Frontend (Planned)
 
@@ -73,7 +71,7 @@
 - **Language**: TypeScript
 - **Styling**: Angular Prime-UI
 - **Charts**: Chart.js
-- **Real-time**: Socket.io
+- **Real-time**: Socket.io 
 - **Components**: PrimeNG
 
 ### DevOps & Infrastructure
@@ -82,7 +80,7 @@
 - **Database Migration**: Flyway
 - **Build Tool**: Maven
 - **Monitoring**: Spring Actuator
-- **Logging**: Logback
+- **Logging**: Logback , Slf4j
 
 ## 🚀 Quick Start
 
@@ -92,7 +90,6 @@
 - 🐬 MySQL 8.0+
 - 📦 Maven 3.6+
 - 🐳 Docker
-- 🗄️ Redis (optional, for caching)
 
 ### 1. Clone the Repository
 
