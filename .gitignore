@@ -11,4 +11,11 @@
 
 trackify-backend/src/main/resources/application.properties
 
+#hide the log file
 trackify-backend/logs/trackify.log
+
+#hide the uploads folder
+trackify-backend/uploads
+
+#hide the logs folder
+trackify-backend/logs
