@@ -19,3 +19,6 @@ trackify-backend/uploads
 
 #hide the logs folder
 trackify-backend/logs
+
+#hide the node_modules folder
+trackify-frontend/node_modules
