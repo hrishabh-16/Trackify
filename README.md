@@ -44,7 +44,7 @@
 
 - 🧠 **Smart Categorization** - Automatic expense category suggestions
 - 🚨 **Anomaly Detection** - Identify unusual spending patterns
-- 📝 **Receipt OCR** - Extract data from receipt images
+- 📝 **Receipt OCR** - Extract data from receipt images through Tesseract OCR
 - 💡 **Spending Insights** - AI-driven financial recommendations
 
 ### 🏦 Integrations
