@@ -48,8 +48,6 @@
 - 💡 **Spending Insights** - AI-driven financial recommendations
 
 ### 🏦 Integrations
-
-- 🏪 **Bank API Integration** - Automatic transaction import
 - 📱 **UPI Transaction Processing** - Parse UPI payment messages
 - 📲 **SMS Integration** - Extract expenses from transaction SMS
 - 🔗 **OAuth2 Authentication** - Google, Facebook login support
